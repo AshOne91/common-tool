@@ -6,4 +6,8 @@
     <RootNamespace>common_tool</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Tools\Upload\" />
+  </ItemGroup>
+
 </Project>
