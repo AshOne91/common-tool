@@ -7,7 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Tools\Upload\" />
+    <Compile Remove="Tools\Upload\**" />
+    <EmbeddedResource Remove="Tools\Upload\**" />
+    <None Remove="Tools\Upload\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="3.7.9.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
 </Project>
