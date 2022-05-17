@@ -34,18 +34,15 @@ namespace common_tool
     {
         public string name = string.Empty;
         public string parent = string.Empty;
-        public bool head = false;
-        public bool unbind = false;
         public List<InfraMember> members;
-
     }
 
     public class InfraDatabase
     {
-        public string tableType = string.Empty;
+        /*public string tableType = string.Empty;
         public string tableName = string.Empty;
         public string partitionKey = string.Empty;
-        public string sortKey = string.Empty;
+        public string sortKey = string.Empty;*/
         public List<InfraModel> models;
     }
 

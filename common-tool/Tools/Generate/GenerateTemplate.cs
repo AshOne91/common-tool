@@ -628,7 +628,7 @@ namespace common_tool.Tools.Generate
             streamWriter.WriteLine("\t\t}");
         }
 
-        void GenerateProjectFile(string targetDir, string templateType, string templateName)
+        public static void GenerateProjectFile(string targetDir, string templateType, string templateName)
         {
             string filePath = Path.Combine(targetDir, templateName + ".csproj");
             using (var streamWriter = new StreamWriter(filePath))
@@ -651,7 +651,7 @@ namespace common_tool.Tools.Generate
             }
         }
 
-        void GenerateInfrastructureFile(string targetDir, string templateType, string templateName)
+        public static void GenerateInfrastructureFile(string targetDir, string templateType, string templateName)
         {
             string filePath = Path.Combine(targetDir, "infrastructure-config.json");
             using (var streamWriter = new StreamWriter(filePath))
