@@ -22,7 +22,7 @@ namespace common_tool
     public class InfraProtocol
     {
         public int id;
-        public string method = "Post";
+        public string method = "react"; //noti, react 
         public string name = string.Empty;
         public string protocolType = string.Empty;
         public List<InfraMember> reqMembers;
@@ -39,11 +39,12 @@ namespace common_tool
 
     public class InfraDatabase
     {
-        /*public string tableType = string.Empty;
-        public string tableName = string.Empty;
-        public string partitionKey = string.Empty;
-        public string sortKey = string.Empty;*/
-        public List<InfraModel> models;
+        public string databaseName = string.Empty; //데이터베이스 이름
+        public string tableType = string.Empty; //slot(슬롯형식), base(싱글형식)
+        public string tableName = string.Empty; //table명
+        public string partitionKey_1 = string.Empty;
+        public string partitionKey_2 = string.Empty;
+        public List<InfraMember> members;
     }
 
     public class InfraTemplateConfig
