@@ -73,13 +73,60 @@ namespace common_tool.Tools.Generate
 
                 var namespaceValue = Helpers.GetNameSpace(commonPath);
                 GenerateDBTable(commonPath, namespaceValue);
+                GenerateUserDB(commonPath, templateType, namespaceValue);
                 GenerateDBSave(commonPath, templateType, namespaceValue);
                 GenerateDBLoad(commonPath, templateName, namespaceValue);
             }
         }
-        void GenerateDBSave(string targetDir, string templateType, string namespaceValue)
+        void GenerateUserDB(string targetDir, string templateType, string namespaceValue)
         {
-            string filePath = Path.Combine(targetDir, _config.templateName + "DBSave.cs");
+            string filePath = Path.Combine(targetDir, _config.templateName + "UserDB.cs");
+            using (var streamWriter = new StreamWriter(filePath))
+            {
+                streamWriter.WriteLine("using System;");
+                streamWriter.WriteLine("using System.Collections.Generic;");
+                streamWriter.WriteLine("using Service.Net;");
+                streamWriter.WriteLine("using Service.Core;");
+                streamWriter.WriteLine("using Service.DB;");
+                streamWriter.WriteLine();
+                streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
+                streamWriter.WriteLine("{");
+                streamWriter.WriteLine("\tpublic partial class UserDB");
+                streamWriter.WriteLine("\t{");
+                foreach (var database in _config.databases)
+                {
+                    if (database.tableType.ToLower() == "slot")
+                    {
+                        streamWriter.WriteLine("\t\tpublic DBSlotContainer_{0} _dbSlotContainer_{1} = new DBSlotContainer_{2}();", database.tableName, database.tableName, database.tableName);
+                    }
+                    else
+                    {
+                        streamWriter.WriteLine("\t\tpublic DBBaseContainer_{0} _dbBaseContainer_{1} = new DBBaseContainer_{2}();", database.tableName, database.tableName, database.tableName);
+                    }
+                }
+                streamWriter.WriteLine();
+                streamWriter.WriteLine("\t\tpartial void {0}Copy(UserDB userSrc, bool isChanged)");
+                streamWriter.WriteLine("\t\t{");
+                foreach (var database in _config.databases)
+                {
+                    if (database.tableType.ToLower() == "slot")
+                    {
+                        streamWriter.WriteLine("\t\t\t_dbSlotContainer_{0}.Copy(userSrc._dbSlotContainer_{1}, isChanged);", database.tableName);
+                    }
+                    else
+                    {
+                        streamWriter.WriteLine("\t\t\t_dbBaseContainer_{0}.Copy(userSrc._dbBaseContainer_{1}, isChanged);", database.tableName);
+                    }
+                }
+                streamWriter.WriteLine("\t\t}");
+                streamWriter.WriteLine("\t}");
+                streamWriter.WriteLine("}");
+
+            }
+        }
+        void GenerateDBLoad(string targetDir, string templateType, string namespaceValue)
+        {
+            string filePath = Path.Combine(targetDir, _config.templateName + "DBLoad.cs");
             using (var streamWriter = new StreamWriter(filePath))
             {
                 streamWriter.WriteLine("using System;");
@@ -91,11 +138,11 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
                 streamWriter.WriteLine("{");
-                streamWriter.WriteLine("\tpublic partial class DBGameUserSave");
+                streamWriter.WriteLine("\tpublic partial class DBGameUserLoad");
                 streamWriter.WriteLine("\t{");
                 foreach (var database in _config.databases)
                 {
-                    string funcStr = string.Format("\t\tprivate void _Run_SaveUser_{0}:(Ado adoDB, ", database.tableName);
+                    string funcStr = string.Format("\t\tprivate void _Run_LoadUser_{0}(Ado adoDB, ", database.tableName);
                     if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                     {
                         funcStr += "UInt64 ";
@@ -118,10 +165,138 @@ namespace common_tool.Tools.Generate
                     }
                     streamWriter.WriteLine(funcStr);
                     streamWriter.WriteLine("\t\t{");
+                    streamWriter.WriteLine("\t\t\ttry");
+                    streamWriter.WriteLine("\t\t\t{");
                     if (database.tableType.ToLower() == "slot")
                     {
-                        streamWriter.WriteLine("\t\t\ttry");
-                        streamWriter.WriteLine("\t\t\t{");
+                        streamWriter.WriteLine("\t\t\t\tQueryBuilder query = new QueryBuilder(\"gp_player_{0}_load\");", database.tableName.ToLower());
+                        if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_1, database.partitionKey_1);
+                        }
+                        if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_2, database.partitionKey_2);
+                        }
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\tadoDB.Execute(query);");
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\twhile (adoDB.RecordWhileNotEOF())");
+                        streamWriter.WriteLine("\t\t\t\t{");
+                        streamWriter.WriteLine("\t\t\t\t\tshort nSlot = adoDB.RecordGetValue(\"slot\");");
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\t\tDBSlot_{0} slot = container.Insert(nSlot, false);");
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\t\tslot._isDeleted = adoDB.RecordGetValue(\"deleted\");");
+                        if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetValue(\"{1}\");", database.partitionKey_1, database.partitionKey_1);
+                        }
+                        if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetValue(\"{1}\");", database.partitionKey_2, database.partitionKey_2);
+                        }
+                        streamWriter.WriteLine("\t\t\t\t\tslot._DBData.createTime = adoDB.RecordGetValue(\"createTime\");");
+                        streamWriter.WriteLine("\t\t\t\t\tslot._DBData.updateTime = adoDB.RecordGetValue(\"updateTime\");");
+                        streamWriter.WriteLine();
+                        foreach (var member in database.members)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetValue(\"{1}\");", member.name, member.name);
+                        }
+                    }
+                    else
+                    {
+                        streamWriter.WriteLine("\t\t\t\tQueryBuilder query = new QueryBuilder(\"gp_player_{0}_load\");", database.tableName.ToLower());
+                        if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_1, database.partitionKey_1);
+                        }
+                        if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_2, database.partitionKey_2);
+                        }
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\tadoDB.Execute(query);");
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\tif (adoDB.RecordNotEOF())");
+                        streamWriter.WriteLine("\t\t\t\t{");
+                        streamWriter.WriteLine("\t\t\t\t\t{0} r{1} = container.GetWriteData(false)._DBData;", database.tableName, database.tableName);
+                        streamWriter.WriteLine();
+                        if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tr{0}.{1} = adoDB.RecordGetValue(\"{2}\")", database.tableName, database.partitionKey_1, database.partitionKey_1);
+                        }
+                        if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tr{0}.{1} = adoDB.RecordGetValue(\"{2}\")", database.tableName, database.partitionKey_2, database.partitionKey_2);
+                        }
+                        streamWriter.WriteLine("\t\t\t\t\tr{0}.createTime = adoDB.RecordGetValue(\"createTime\")", database.tableName);
+                        streamWriter.WriteLine("\t\t\t\t\tr{0}.updateTime = adoDB.RecordGetValue(\"updateTime\")", database.tableName);
+                        streamWriter.WriteLine();
+                        foreach (var member in database.members)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tr{0}.{1} = adoDB.RecordGetValue(\"{2}\")", database.tableName, member.name, member.name);
+                        }
+                        streamWriter.WriteLine("\t\t\t\t}");
+                        streamWriter.WriteLine("\t\t\t\telse");
+                        streamWriter.WriteLine("\t\t\t\t{");
+                        streamWriter.WriteLine("\t\t\t\t\t_strResult = \"[gp_player_{0}_load] No Result!\";", database.tableName.ToLower());
+                        streamWriter.WriteLine("\t\t\t\t}");
+                    }
+                    streamWriter.WriteLine("\t\t\t}");
+                    streamWriter.WriteLine("\t\t\tcatch (Exception e)");
+                    streamWriter.WriteLine("\t\t\t{");
+                    streamWriter.WriteLine("\t\t\t\tthrow new Exception(\"[gp_player_{0}_load]\" + e.Message);", database.tableName.ToLower());
+                    streamWriter.WriteLine("\t\t\t}");
+                    streamWriter.WriteLine("\t\t}");
+                }
+            }
+        }
+        void GenerateDBSave(string targetDir, string templateType, string namespaceValue)
+        {
+            string filePath = Path.Combine(targetDir, _config.templateName + "DBSave.cs");
+            using (var streamWriter = new StreamWriter(filePath))
+            {
+                streamWriter.WriteLine("using System;");
+                streamWriter.WriteLine("using System.Collections.Generic;");
+                streamWriter.WriteLine("using Service.Net;");
+                streamWriter.WriteLine("using Service.Core;");
+                streamWriter.WriteLine("using Service.DB;");
+                streamWriter.WriteLine();
+
+                streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
+                streamWriter.WriteLine("{");
+                streamWriter.WriteLine("\tpublic partial class DBGameUserSave");
+                streamWriter.WriteLine("\t{");
+                foreach (var database in _config.databases)
+                {
+                    string funcStr = string.Format("\t\tprivate void _Run_SaveUser_{0}(Ado adoDB, ", database.tableName);
+                    if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                    {
+                        funcStr += "UInt64 ";
+                        funcStr += database.partitionKey_1;
+                        funcStr += ", ";
+                    }
+                    if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                    {
+                        funcStr += "UInt64 ";
+                        funcStr += database.partitionKey_2;
+                        funcStr += ", ";
+                    }
+                    if (database.tableType.ToLower() == "slot")
+                    {
+                        funcStr += string.Format("DBSlotContainer_{0} container)", database.tableName);
+                    }
+                    else
+                    {
+                        funcStr += string.Format("DBBaseContainer_{0} container)", database.tableName);
+                    }
+                    streamWriter.WriteLine(funcStr);
+                    streamWriter.WriteLine("\t\t{");
+                    streamWriter.WriteLine("\t\t\ttry");
+                    streamWriter.WriteLine("\t\t\t{");
+                    if (database.tableType.ToLower() == "slot")
+                    {
                         streamWriter.WriteLine("\t\t\t\tcontainer.ForEach((DBSlot_{0} slot) =>", database.tableName);
                         streamWriter.WriteLine("\t\t\t\t{");
                         streamWriter.WriteLine("\t\t\t\t\tQueryBuilder query = new QueryBuilder(\"gp_player_{0}_save\");", database.tableName.ToLower());
@@ -143,31 +318,82 @@ namespace common_tool.Tools.Generate
                         streamWriter.WriteLine();
                         foreach(var member in database.members)
                         {
-                            streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_{0}\");");
+                            streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_{0}\", slot._DBData.{1});", member.name, member.name);
                         }
                         streamWriter.WriteLine("\t\t\t\t\t}");
                         streamWriter.WriteLine("\t\t\t\t\telse");
                         streamWriter.WriteLine("\t\t\t\t\t{");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_slot\", slot._nSlot);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_deleted\", 1);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_createTime\", DateTime.UtcNow);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_updateTime\", DateTime.UtcNow);");
+                        streamWriter.WriteLine();
+                        foreach (var member in database.members)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_{0}\", default({1}));", member.name, member.type);
+                        }
                         streamWriter.WriteLine("\t\t\t\t\t}");
                         streamWriter.WriteLine("\t\t\t\t\tadoDB.ExecuteNoRecords(query);");
                         streamWriter.WriteLine("\t\t\t\t}, true);");
-                        streamWriter.WriteLine("\t\t\t}");
-                        streamWriter.WriteLine("\t\t\tcatch (Exception e)");
-                        streamWriter.WriteLine("\t\t\t{");
-                        streamWriter.WriteLine("\t\t\t\tthrow new Exception(\"[gp_player_{0}_save]\" + e.Message);", database.tableName.ToLower());
-                        streamWriter.WriteLine("\t\t\t}");
                     }
                     else
                     {
-
+                        streamWriter.WriteLine("\t\t\t\tif (container.GetReadData()._isChanged == false)");
+                        streamWriter.WriteLine("\t\t\t\t{");
+                        streamWriter.WriteLine("\t\t\t\t\treturn;");
+                        streamWriter.WriteLine("\t\t\t\t}");
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\t{0} r{1} = container.GetReadData()._DBData;", database.tableName, database.tableName);
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("\t\t\t\tQueryBuilder query = new QueryBuilder(\"gp_player_{0}_save\");", database.tableName.ToLower());
+                        if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_1, database.partitionKey_1);
+                        }
+                        if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_2, database.partitionKey_2);
+                        }
+                        streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"p_createTime\", r{0}.createTime);", database.tableName);
+                        streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"p_updateTime\", r{0}.updateTime);", database.tableName);
+                        streamWriter.WriteLine();
+                        foreach (var member in database.members)
+                        {
+                            streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"p_{0}\", r{1}.{2});", member.name, database.tableName, member.name);
+                        }
+                        streamWriter.WriteLine();
+                        streamWriter.WriteLine("adoDB.ExecuteNoRecords(query);");
                     }
+                    streamWriter.WriteLine("\t\t\t}");
+                    streamWriter.WriteLine("\t\t\tcatch (Exception e)");
+                    streamWriter.WriteLine("\t\t\t{");
+                    streamWriter.WriteLine("\t\t\t\tthrow new Exception(\"[gp_player_{0}_save]\" + e.Message);", database.tableName.ToLower());
+                    streamWriter.WriteLine("\t\t\t}");
                     streamWriter.WriteLine("\t\t}");
                 }
                 streamWriter.WriteLine("\t\tpartial void {0}Run(UserDB userDB, AdoDB adoDB, UInt64 partitionKey_1, UInt64 partitionKey_2)", templateType);
                 streamWriter.WriteLine("\t\t{");
                 foreach (var database in _config.databases)
                 {
-                    streamWriter.WriteLine("\t\t\t", )
+                    string funcStr = string.Format("\t\t\t_Run_SaveUser_{0}(adoDB, ", database.tableName);
+                    if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                    {
+                        funcStr += "partitionKey_1, ";
+                    }
+                    if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                    {
+                        funcStr += "partitionKey_2, ";
+                    }
+                    if (database.tableType.ToLower() == "slot")
+                    {
+                        funcStr += string.Format("userDB._dbSlotContainer_{0});", database.tableName);
+                    }
+                    else
+                    {
+                        funcStr += string.Format("userDB._dbBaseContainer_{0});", database.tableName);
+                    }
+                    streamWriter.WriteLine(funcStr);
+
                 }
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine("\t}");
