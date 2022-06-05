@@ -22,11 +22,12 @@ namespace common_tool
                 Console.WriteLine($"[gamebase] args : {string.Join(" ", args)}");
 
                 Dictionary<string, ActionBase> dicAction = new Dictionary<string, ActionBase>
-            {
-				{"gen:table", new GenerateTable(param) },
-				{"gen:template", new GenerateTemplate(param)},
-                {"gen:database", new GenerateDatabase(param)}
-            };
+                {
+				    {"gen:table", new GenerateTable(param) },
+				    {"gen:template", new GenerateTemplate(param)},
+                    {"gen:database", new GenerateDatabase(param)},
+                    {"gen:sql", new GenerateDatabase(param)},
+                };
 
                 if (args.Length <= 2)
                 {
