@@ -24,7 +24,7 @@ namespace common_tool
         public int id;
         public string method = "react"; //noti, react 
         public string name = string.Empty;
-        public string protocolType = string.Empty;
+        public string protocolType = string.Empty; //admin
         public List<InfraMember> reqMembers;
         public List<InfraMember> resMembers;
         public List<InfraMember> notiMembers;

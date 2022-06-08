@@ -1,4 +1,5 @@
-start common-tool generate template --targetdir .\Template\MailBox\GameBaseMailBox --client-path .\Template\MailBox\GameBaseMailBox\Client
+::start common-tool generate template --targetdir .\Template\MailBox\GameBaseMailBox --client-path .\Template\MailBox\GameBaseMailBox\Client
+
 start common-tool generate template --targetdir .\Template\Account\GameBaseAccount
 start common-tool generate template --targetdir .\Template\Building\GameBaseBuilding
 start common-tool generate template --targetdir .\Template\Character\RandomwarsDice

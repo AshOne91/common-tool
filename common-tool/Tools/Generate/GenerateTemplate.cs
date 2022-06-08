@@ -96,9 +96,9 @@ namespace common_tool.Tools.Generate
                         Directory.CreateDirectory(clientCommonPath);
                     }
 
-                    GenerateModel(commonPath, true, namespaceValue);
-                    GenerateProtocol(commonPath, true, namespaceValue);
-                    GeneratePacket(commonPath, true, namespaceValue);
+                    GenerateModel(commonPath, false, namespaceValue);
+                    GenerateProtocol(commonPath, false, namespaceValue);
+                    GeneratePacket(commonPath, false, namespaceValue);
                 }
 
                 GenerateController(targetDir.FullName);
@@ -283,8 +283,9 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine("using System.Collections.Generic;");
-                streamWriter.WriteLine("using Service.Net");
-                streamWriter.WriteLine("using Service.Core");
+                streamWriter.WriteLine("using System.Numerics;");
+                streamWriter.WriteLine("using Service.Net;");
+                streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
@@ -304,21 +305,23 @@ namespace common_tool.Tools.Generate
                         }
                         else
                         {
-                            streamWriter.WriteLine("\t\tpublic {0} {1} = new {2}()", member.type, member.name, member.type);
+                            streamWriter.WriteLine("\t\tpublic {0} {1} = new {2}();", member.type, member.name, member.type);
                         }
                     }
                     streamWriter.WriteLine("\t\tpublic void Serialize(Packet packet)");
                     streamWriter.WriteLine("\t\t{");
                     foreach (var member in model.members)
                     {
+                        member.type = member.type.Replace(" ", "");
+                        member.name = member.name.Replace(" ", "");
                         if (member.type.StartsWith("List<") == true)
                         {
                             streamWriter.WriteLine("\t\t\tint length{0} = ({1} == null) ? 0 : {2}.Count;", member.name, member.name, member.name);
                             streamWriter.WriteLine("\t\t\tpacket.Write(length{0});", member.name);
                             streamWriter.WriteLine("\t\t\tfor (int i = 0; i < length{0}; ++i)", member.name);
                             streamWriter.WriteLine("\t\t\t{");
-                            string tempType = member.type.Substring(member.type.IndexOf('<') + 1, member.type.IndexOf('>') - member.type.IndexOf('<') - 1);
-                            streamWriter.WriteLine("\t\t\t\tpacket.Write({0})", tempType);
+                            //string tempType = member.type.Substring(member.type.IndexOf('<') + 1, member.type.IndexOf('>') - member.type.IndexOf('<') - 1);
+                            streamWriter.WriteLine("\t\t\t\tpacket.Write({0}[i]);", member.name);
                             streamWriter.WriteLine("\t\t\t}");
 
                         }
@@ -333,7 +336,7 @@ namespace common_tool.Tools.Generate
                         }
                         else
                         {
-                            streamWriter.WriteLine("\t\t\tpacket.Write({0})", member.name);
+                            streamWriter.WriteLine("\t\t\tpacket.Write({0});", member.name);
                         }
                     }
                     streamWriter.WriteLine("\t\t}");
@@ -341,6 +344,8 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t\t{");
                     foreach (var member in model.members)
                     {
+                        member.type = member.type.Replace(" ","");
+                        member.name = member.name.Replace(" ", "");
                         if (member.type.StartsWith("List<") == true)
                         {
                             streamWriter.WriteLine("\t\t\tint length{0} = ({1} == null) ? 0 : {2}.Count;", member.name, member.name, member.name);
@@ -348,8 +353,15 @@ namespace common_tool.Tools.Generate
                             streamWriter.WriteLine("\t\t\tfor (int i = 0; i < length{0}; ++i)", member.name);
                             streamWriter.WriteLine("\t\t\t{");
                             string tempType = member.type.Substring(member.type.IndexOf('<') + 1, member.type.IndexOf('>') - member.type.IndexOf('<') - 1);
-                            streamWriter.WriteLine("\t\t\t\t{0} element = new {1}()", tempType, tempType);
-                            streamWriter.WriteLine("\t\t\t\tpacket.Read(ref element);");
+                            if (tempType.CompareTo("string") == 0)
+                            {
+                                streamWriter.WriteLine("\t\t\t\tstring element = string.Empty");
+                            }
+                            else
+                            {
+                                streamWriter.WriteLine("\t\t\t\t{0} element = new {1}();", tempType, tempType);
+                            }
+                            streamWriter.WriteLine("\t\t\t\tpacket.Read({0});", GetModelDerializeInputParameter(tempType, "element"));
                             streamWriter.WriteLine("\t\t\t\t{0}.Add(element);", member.name);
                             streamWriter.WriteLine("\t\t\t}");
 
@@ -360,12 +372,18 @@ namespace common_tool.Tools.Generate
                             string dicKey = words[0];
                             string dicValue = words[1];
 
-                            streamWriter.WriteLine("int count = 0");
-                            streamWriter.WriteLine("\t\t\tpacket.Read(ref count);");
-                            streamWriter.WriteLine("\t\t\tfor (int i = 0; i < count; ++i");
+                            streamWriter.WriteLine("\t\t\tint length{0} = 0;", member.name);
+                            streamWriter.WriteLine("\t\t\tpacket.Read(ref length{0});", member.name);
+                            streamWriter.WriteLine("\t\t\tfor (int i = 0; i < length{0}; ++i)", member.name);
                             streamWriter.WriteLine("\t\t\t{");
-                            streamWriter.WriteLine("\t\t\t\t{0} tempKey = new {1}();", dicKey, dicKey);
-                            streamWriter.WriteLine("\t\t\t\t{0} tempValue = new {1}();", dicValue, dicValue);
+                            if (dicKey.CompareTo("string") == 0)
+                                streamWriter.WriteLine("\t\t\t\tstring tempKey = string.Empty;", dicKey, dicKey);
+                            else
+                                streamWriter.WriteLine("\t\t\t\t{0} tempKey = new {1}();", dicKey, dicKey);
+                            if (dicValue.CompareTo("string") == 0)
+                                streamWriter.WriteLine("\t\t\t\tstring tempValue = string.Empty;", dicValue, dicValue);
+                            else
+                                streamWriter.WriteLine("\t\t\t\t{0} tempValue = new {1}();", dicValue, dicValue);
                             streamWriter.WriteLine("\t\t\t\tpacket.Read(ref tempKey);");
                             streamWriter.WriteLine("\t\t\t\tpacket.Read(ref tempValue);");
                             streamWriter.WriteLine("\t\t\t\t{0}.Add(tempKey, tempValue);", member.name);
@@ -373,7 +391,7 @@ namespace common_tool.Tools.Generate
                         }
                         else
                         {
-                            streamWriter.WriteLine("\t\t\tpacket.Read(ref {0})", member.name);
+                            streamWriter.WriteLine("\t\t\tpacket.Read({0});", GetModelDerializeInputParameter(member.type, member.name));
                         }
                     }
                     streamWriter.WriteLine("\t\t}");
@@ -393,8 +411,8 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine("using System.Collections.Generic;");
-                streamWriter.WriteLine("using Service.Net");
-                streamWriter.WriteLine("using Service.Core");
+                streamWriter.WriteLine("using Service.Net;");
+                streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
@@ -482,6 +500,8 @@ namespace common_tool.Tools.Generate
                             break;
                     }
                 }
+                streamWriter.WriteLine("\t}");
+                streamWriter.WriteLine("}");
             }
         }
         void GeneratePacket(string targetDir, bool defineServer, string namespaceValue)
@@ -494,8 +514,8 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine("using System.Collections.Generic;");
-                streamWriter.WriteLine("using Service.Net");
-                streamWriter.WriteLine("using Service.Core");
+                streamWriter.WriteLine("using Service.Net;");
+                streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
@@ -558,14 +578,16 @@ namespace common_tool.Tools.Generate
             streamWriter.WriteLine("\t\t\tbase.Serialize(packet)");
             foreach (var member in members)
             {
+                member.type = member.type.Replace(" ", "");
+                member.name = member.name.Replace(" ", "");
                 if (member.type.StartsWith("List<") == true)
                 {
                     streamWriter.WriteLine("\t\t\tint length{0} = ({1} == null) ? 0 : {2}.Count;", member.name, member.name, member.name);
                     streamWriter.WriteLine("\t\t\tpacket.Write(length{0});", member.name);
                     streamWriter.WriteLine("\t\t\tfor (int i = 0; i < length{0}; ++i)", member.name);
                     streamWriter.WriteLine("\t\t\t{");
-                    string tempType = member.type.Substring(member.type.IndexOf('<') + 1, member.type.IndexOf('>') - member.type.IndexOf('<') - 1);
-                    streamWriter.WriteLine("\t\t\t\tpacket.Write({0})", tempType);
+                    //string tempType = member.type.Substring(member.type.IndexOf('<') + 1, member.type.IndexOf('>') - member.type.IndexOf('<') - 1);
+                    streamWriter.WriteLine("\t\t\t\tpacket.Write({0}[i]);", member.name);
                     streamWriter.WriteLine("\t\t\t}");
 
                 }
@@ -580,7 +602,7 @@ namespace common_tool.Tools.Generate
                 }
                 else
                 {
-                    streamWriter.WriteLine("\t\t\tpacket.Write({0})", member.name);
+                    streamWriter.WriteLine("\t\t\tpacket.Write({0});", member.name);
                 }
             }
 
@@ -590,6 +612,8 @@ namespace common_tool.Tools.Generate
             streamWriter.WriteLine("\t\t\tbase.Deserialize(packet)");
             foreach (var member in members)
             {
+                member.type = member.type.Replace(" ", "");
+                member.name = member.name.Replace(" ", "");
                 if (member.type.StartsWith("List<") == true)
                 {
                     streamWriter.WriteLine("\t\t\tint length{0} = ({1} == null) ? 0 : {2}.Count;", member.name, member.name, member.name);
@@ -597,8 +621,15 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t\t\tfor (int i = 0; i < length{0}; ++i)", member.name);
                     streamWriter.WriteLine("\t\t\t{");
                     string tempType = member.type.Substring(member.type.IndexOf('<') + 1, member.type.IndexOf('>') - member.type.IndexOf('<') - 1);
-                    streamWriter.WriteLine("\t\t\t\t{0} element = new {1}()", tempType, tempType);
-                    streamWriter.WriteLine("\t\t\t\tpacket.Read(ref element);");
+                    if (tempType.CompareTo("string") == 0)
+                    {
+                        streamWriter.WriteLine("\t\t\t\tstring element = string.Empty");
+                    }
+                    else
+                    {
+                        streamWriter.WriteLine("\t\t\t\t{0} element = new {1}();", tempType, tempType);
+                    }
+                    streamWriter.WriteLine("\t\t\t\tpacket.Read({0});", GetModelDerializeInputParameter(tempType, "element"));
                     streamWriter.WriteLine("\t\t\t\t{0}.Add(element);", member.name);
                     streamWriter.WriteLine("\t\t\t}");
 
@@ -609,12 +640,18 @@ namespace common_tool.Tools.Generate
                     string dicKey = words[0];
                     string dicValue = words[1];
 
-                    streamWriter.WriteLine("int count = 0");
-                    streamWriter.WriteLine("\t\t\tpacket.Read(ref count);");
-                    streamWriter.WriteLine("\t\t\tfor (int i = 0; i < count; ++i");
+                    streamWriter.WriteLine("\t\t\tint length{0} = 0;", member.name);
+                    streamWriter.WriteLine("\t\t\tpacket.Read(ref length{0});", member.name);
+                    streamWriter.WriteLine("\t\t\tfor (int i = 0; i < length{0}; ++i)", member.name);
                     streamWriter.WriteLine("\t\t\t{");
-                    streamWriter.WriteLine("\t\t\t\t{0} tempKey = new {1}();", dicKey, dicKey);
-                    streamWriter.WriteLine("\t\t\t\t{0} tempValue = new {1}();", dicValue, dicValue);
+                    if (dicKey.CompareTo("string") == 0)
+                        streamWriter.WriteLine("\t\t\t\tstring tempKey = string.Empty;", dicKey, dicKey);
+                    else
+                        streamWriter.WriteLine("\t\t\t\t{0} tempKey = new {1}();", dicKey, dicKey);
+                    if (dicValue.CompareTo("string") == 0)
+                        streamWriter.WriteLine("\t\t\t\tstring tempValue = string.Empty;", dicValue, dicValue);
+                    else
+                        streamWriter.WriteLine("\t\t\t\t{0} tempValue = new {1}();", dicValue, dicValue);
                     streamWriter.WriteLine("\t\t\t\tpacket.Read(ref tempKey);");
                     streamWriter.WriteLine("\t\t\t\tpacket.Read(ref tempValue);");
                     streamWriter.WriteLine("\t\t\t\t{0}.Add(tempKey, tempValue);", member.name);
@@ -622,7 +659,7 @@ namespace common_tool.Tools.Generate
                 }
                 else
                 {
-                    streamWriter.WriteLine("\t\t\tpacket.Read(ref {0})", member.name);
+                    streamWriter.WriteLine("\t\t\tpacket.Read({0});", GetModelDerializeInputParameter(member.type, member.name));
                 }
             }
             streamWriter.WriteLine("\t\t}");
@@ -640,7 +677,6 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t</PropertyGroup>");
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\t<ItemGroup>");
-                streamWriter.WriteLine("\t\t<ProjectReference Include=\"../../../Service/Service.Cache/Service.Cache.csproj\" />");
                 streamWriter.WriteLine("\t\t<ProjectReference Include=\"../../../Service/Service.Core/Service.Core.csproj\" />");
                 streamWriter.WriteLine("\t\t<ProjectReference Include=\"../../../Service/Service.DB/Service.DB.csproj\" />");
                 streamWriter.WriteLine("\t\t<ProjectReference Include=\"../../../Service/Service.Net/Service.Net.csproj\" />");
@@ -667,6 +703,41 @@ namespace common_tool.Tools.Generate
             }
 
             Console.WriteLine($"Generate InfrastructureFile : {filePath}");
+        }
+
+        public static string GetModelDerializeInputParameter(string type, string name)
+        {
+            string str = name;
+            switch(type)
+            {
+                case "sbyte":
+                case "SByte":
+                case "byte":
+                case "Byte":
+                case "short":
+                case "ushort":
+                case "int":
+                case "Int32":
+                case "uint":
+                case "UInt32":
+                case "long":
+                case "Int64":
+                case "ulong":
+                case "UInt64":
+                case "float":
+                case "Single":
+                case "double":
+                case "Double":
+                case "decimal":
+                case "Decimal":
+                case "char":
+                case "string":
+                case "bool":
+                case "DateTime":
+                    str = "ref " + name;
+                    break;
+            }
+            return str;
         }
 
     }
