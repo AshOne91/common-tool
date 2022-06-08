@@ -94,8 +94,10 @@ namespace common_tool.Tools.Generate
 
         static string MakeProc()
         {
-            string str = "DELIMITER $$\r\n\r\n";
-            foreach (var)
+            /*string str = "DELIMITER $$\r\n\r\n";
+            foreach (var)*/
+            //!!FIXME
+            return string.Empty;
         }
         static string DeleteTable(InfraDatabase database)
         {
