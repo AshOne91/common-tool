@@ -129,8 +129,8 @@ namespace common_tool.Tools.Generate
                 {
                     streamWriter.WriteLine("using System;");
                     streamWriter.WriteLine("using System.Collections.Generic;");
-                    streamWriter.WriteLine("using GameBase.Service.Core;");
-                    streamWriter.WriteLine("using GameBase.Service.Net;");
+                    streamWriter.WriteLine("using Service.Core;");
+                    streamWriter.WriteLine("using Service.Net;");
                     streamWriter.WriteLine("using GameBase.Template.GameBase;");
                     streamWriter.WriteLine("using GameBase.Template.GameBase.Common;");
                     streamWriter.WriteLine("using GameBase.{0};", commonNamespaceValue);
@@ -140,21 +140,21 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("{");
                     streamWriter.WriteLine("\tpublic partial class {0}Template", _config.templateName);
                     streamWriter.WriteLine("\t{");
-                    switch(protocol.protocolType.ToLower())
+                    switch(protocol.method.ToLower())
                     {
                         case "noti":
                             {
-                                streamWriter.WriteLine("\t\tpublic void ON_{0}_NOTI_CALLBACK(UserObject userObject, PACKET_{0}_NOTI packet)");
+                                streamWriter.WriteLine("\t\tpublic void ON_{0}_NOTI_CALLBACK(UserObject userObject, PACKET_{1}_NOTI packet)", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t{");
                                 streamWriter.WriteLine("\t\t\t");
                                 streamWriter.WriteLine("\t\t}");
                             }
                             break;
                         case "react":
-                            streamWriter.WriteLine("\t\tpublic void ON_{0}_REQ_CALLBACK(UserObject userObject, PACKET_{0}_NOTI packet)");
+                            streamWriter.WriteLine("\t\tpublic void ON_{0}_REQ_CALLBACK(UserObject userObject, PACKET_{1}_REQ packet)", protocol.name, protocol.name);
                             streamWriter.WriteLine("\t\t{");
                             streamWriter.WriteLine("\t\t}");
-                            streamWriter.WriteLine("\t\tpublic void ON_{0}_RES_CALLBACK(UserObject userObject, PACKET_{0}_NOTI packet)");
+                            streamWriter.WriteLine("\t\tpublic void ON_{0}_RES_CALLBACK(UserObject userObject, PACKET_{1}_RES packet)", protocol.name, protocol.name);
                             streamWriter.WriteLine("\t\t{");
                             streamWriter.WriteLine("\t\t}");
                             break;
@@ -181,11 +181,11 @@ namespace common_tool.Tools.Generate
             {
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine("using System.Collections.Generic;");
-                streamWriter.WriteLine("using GameBase.Service.Core;");
-                streamWriter.WriteLine("using GameBase.Service.Net;");
+                streamWriter.WriteLine("using Service.Core;");
+                streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using GameBase.Template.GameBase;");
                 streamWriter.WriteLine("using GameBase.Template.GameBase.Common;");
-                streamWriter.WriteLine("using GameBase.{0}", commonNamespaceValue);
+                streamWriter.WriteLine("using GameBase.{0};", commonNamespaceValue);
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
                 streamWriter.WriteLine("{");
@@ -195,16 +195,16 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\tpublic override void Init(TemplateConfig config)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tbase.Init(config);");
-                streamWriter.WriteLine("\t\t\tOnLoadData(config)");
+                streamWriter.WriteLine("\t\t\t//OnLoadData(config)");
                 streamWriter.WriteLine("\t\t\t// TODO : 서버 기동시 실행할 템플릿 관련 로직을 아래에 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override void OnLoadData(TemplateConfig config);");
+                streamWriter.WriteLine("\t\tpublic override void OnLoadData(TemplateConfig config)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t// TODO : 로드할 데이터를 연결");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override void OnClientCreate(UserObject userObject);");
+                streamWriter.WriteLine("\t\tpublic override void OnClientCreate(UserObject userObject)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t// TODO : 유저의 최초 생성시 필요한 DB관련 로직을 작성");
                 streamWriter.WriteLine("\t\t}");
@@ -214,7 +214,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t// TODO : 유저의 로그인시 필요한 DB관련 로직을 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override void OnClientDelete(string userId)");
+                streamWriter.WriteLine("\t\tpublic override void OnClientDelete(UserObject userObject)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t// TODO : 계정 초기화시 사용 템플릿에 보유한 내역듣 삭제");
                 streamWriter.WriteLine("\t\t}");
@@ -269,7 +269,7 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
                 streamWriter.WriteLine("{");
-                streamWriter.WriteLine("\t// TODO : 템플릿에서 사용할 열거혐을 정의합니다.");
+                streamWriter.WriteLine("\t// TODO : 템플릿에서 사용할 열거형을 정의합니다.");
                 streamWriter.WriteLine("}");
             }
         }
@@ -434,13 +434,13 @@ namespace common_tool.Tools.Generate
                     {
                         case "noti":
                             {
-                                streamWriter.WriteLine("\t\t\tMessageControllers.Add(PACKET_{0}_NOTI.ProtocolId, {1}_CONTROLLER)", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\t\tMessageControllers.Add(PACKET_{0}_NOTI.ProtocolId, {1}_NOTI_CONTROLLER);", protocol.name, protocol.name);
                             }
                             break;
                         case "react":
                             {
-                                streamWriter.WriteLine("\t\t\tMessageControllers.Add(PACKET_{0}_REQ.ProtocolId, {1}_REQ_CONTROLLER)", protocol.name, protocol.name);
-                                streamWriter.WriteLine("\t\t\tMessageControllers.Add(PACKET_{0}_RES.ProtocolId, {1}_RES_CONTROLLER)", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\t\tMessageControllers.Add(PACKET_{0}_REQ.ProtocolId, {1}_REQ_CONTROLLER);", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\t\tMessageControllers.Add(PACKET_{0}_RES.ProtocolId, {1}_RES_CONTROLLER);", protocol.name, protocol.name);
                             }
                             break;
                         default:
@@ -467,34 +467,34 @@ namespace common_tool.Tools.Generate
                     {
                         case "noti":
                             {
-                                streamWriter.WriteLine("\t\tpublic delegate void {0}_NOTI_CALLBACK(UserObject userObject, PACKET_{1}_NOTI packet");
-                                streamWriter.WriteLine("\t\tpublic {0}_NOTI_CALLBACK ON_{1}_NOTI_CALLBACK");
-                                streamWriter.WriteLine("\t\tpublic void {0}_NOTI_CONTROLLER(UserObject obj, Packet packet");
+                                streamWriter.WriteLine("\t\tpublic delegate void {0}_NOTI_CALLBACK(UserObject userObject, PACKET_{1}_NOTI packet);", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic {0}_NOTI_CALLBACK ON_{1}_NOTI_CALLBACK;", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic void {0}_NOTI_CONTROLLER(UserObject obj, Packet packet)", protocol.name);
                                 streamWriter.WriteLine("\t\t{");
-                                streamWriter.WriteLine("\t\t\tPACKET_{0}_NOTI recvPacket = new PACKET_{1}_NOTI();");
+                                streamWriter.WriteLine("\t\t\tPACKET_{0}_NOTI recvPacket = new PACKET_{1}_NOTI();", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t\trecvPacket.Deserialize(packet);");
-                                streamWriter.WriteLine("\t\t\tON_{0}_NOTI_CALLBACK(obj, recvPacket);");
+                                streamWriter.WriteLine("\t\t\tON_{0}_NOTI_CALLBACK(obj, recvPacket);", protocol.name);
                                 streamWriter.WriteLine("\t\t}");
                             }
                             break;
                         case "react":
                             {
-                                streamWriter.WriteLine("\t\tpublic delegate void {0}_REQ_CALLBACK(UserObject userObject, PACKET_{1}_REQ packet");
-                                streamWriter.WriteLine("\t\tpublic {0}_REQ_CALLBACK ON_{1}_REQ_CALLBACK");
-                                streamWriter.WriteLine("\t\tpublic void {0}_REQ_CONTROLLER(UserObject obj, Packet packet");
+                                streamWriter.WriteLine("\t\tpublic delegate void {0}_REQ_CALLBACK(UserObject userObject, PACKET_{1}_REQ packet);", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic {0}_REQ_CALLBACK ON_{1}_REQ_CALLBACK;", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic void {0}_REQ_CONTROLLER(UserObject obj, Packet packet)", protocol.name);
                                 streamWriter.WriteLine("\t\t{");
-                                streamWriter.WriteLine("\t\t\tPACKET_{0}_REQ recvPacket = new PACKET_{1}_REQ();");
+                                streamWriter.WriteLine("\t\t\tPACKET_{0}_REQ recvPacket = new PACKET_{1}_REQ();", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t\trecvPacket.Deserialize(packet);");
-                                streamWriter.WriteLine("\t\t\tON_{0}_REQ_CALLBACK(obj, recvPacket);");
+                                streamWriter.WriteLine("\t\t\tON_{0}_REQ_CALLBACK(obj, recvPacket);", protocol.name);
                                 streamWriter.WriteLine("\t\t}");
 
-                                streamWriter.WriteLine("\t\tpublic delegate void {0}_RES_CALLBACK(UserObject userObject, PACKET_{1}_RES packet");
-                                streamWriter.WriteLine("\t\tpublic {0}_RES_CALLBACK ON_{1}_RES_CALLBACK");
-                                streamWriter.WriteLine("\t\tpublic void {0}_RES_CONTROLLER(UserObject obj, Packet packet");
+                                streamWriter.WriteLine("\t\tpublic delegate void {0}_RES_CALLBACK(UserObject userObject, PACKET_{1}_RES packet);", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic {0}_RES_CALLBACK ON_{1}_RES_CALLBACK;", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic void {0}_RES_CONTROLLER(UserObject obj, Packet packet)", protocol.name);
                                 streamWriter.WriteLine("\t\t{");
-                                streamWriter.WriteLine("\t\t\tPACKET_{0}_RES recvPacket = new PACKET_{1}_RES();");
+                                streamWriter.WriteLine("\t\t\tPACKET_{0}_RES recvPacket = new PACKET_{1}_RES();", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t\trecvPacket.Deserialize(packet);");
-                                streamWriter.WriteLine("\t\t\tON_{0}_RES_CALLBACK(obj, recvPacket);");
+                                streamWriter.WriteLine("\t\t\tON_{0}_RES_CALLBACK(obj, recvPacket);", protocol.name);
                                 streamWriter.WriteLine("\t\t}");
                             }
                             break;
@@ -516,6 +516,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("using System.Collections.Generic;");
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using Service.Core;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
@@ -526,8 +527,8 @@ namespace common_tool.Tools.Generate
                     switch (protocol.method.ToLower())
                     {
                         case "noti":
-                            packetName = String.Format("PACKET_{0}_NOTI : PacketBaseNotification", protocol.name);
-                            streamWriter.WriteLine("\tpublic sealed class {0}", packetName);
+                            packetName = String.Format("PACKET_{0}_NOTI", protocol.name);
+                            streamWriter.WriteLine("\tpublic sealed class {0} : PacketBaseNotification", packetName);
                             streamWriter.WriteLine("\t{");
                             streamWriter.WriteLine("\t\tpublic static readonly ushort ProtocolId = {0};", protocol.id);
                             streamWriter.WriteLine("\t\t");
@@ -535,14 +536,14 @@ namespace common_tool.Tools.Generate
                             streamWriter.WriteLine("\t}");
                             break;
                         case "react":
-                            packetName = String.Format("PACKET_{0}_REQ : PacketBaseRequest", protocol.name);
-                            streamWriter.WriteLine("\tpublic sealed class {0}", packetName);
+                            packetName = String.Format("PACKET_{0}_REQ", protocol.name);
+                            streamWriter.WriteLine("\tpublic sealed class {0} : PacketBaseRequest", packetName);
                             streamWriter.WriteLine("\t{");
                             streamWriter.WriteLine("\t\tpublic static readonly ushort ProtocolId = {0};", protocol.id);
                             GeneratePacketMember(streamWriter, packetName, protocol.reqMembers);
                             streamWriter.WriteLine("\t}");
-                            packetName = String.Format("PACKET_{0}_RES : PacketBaseResponse", protocol.name);
-                            streamWriter.WriteLine("\tpublic sealed class {0}", packetName);
+                            packetName = String.Format("PACKET_{0}_RES", protocol.name);
+                            streamWriter.WriteLine("\tpublic sealed class {0} : PacketBaseResponse", packetName);
                             streamWriter.WriteLine("\t{");
                             streamWriter.WriteLine("\t\tpublic static readonly ushort ProtocolId = {0};", protocol.id+1);
                             GeneratePacketMember(streamWriter, packetName, protocol.resMembers);
@@ -569,13 +570,13 @@ namespace common_tool.Tools.Generate
                 }
                 else
                 {
-                    streamWriter.WriteLine("\t\tpublic {0} {1} = new {2}()", member.type, member.name, member.type);
+                    streamWriter.WriteLine("\t\tpublic {0} {1} = new {2}();", member.type, member.name, member.type);
                 }
             }
-
+            streamWriter.WriteLine("\t\tpublic {0}():base(ProtocolId){{}}", className);
             streamWriter.WriteLine("\t\tpublic override void Serialize(Packet packet)");
             streamWriter.WriteLine("\t\t{");
-            streamWriter.WriteLine("\t\t\tbase.Serialize(packet)");
+            streamWriter.WriteLine("\t\t\tbase.Serialize(packet);");
             foreach (var member in members)
             {
                 member.type = member.type.Replace(" ", "");
@@ -609,7 +610,7 @@ namespace common_tool.Tools.Generate
             streamWriter.WriteLine("\t\t}");
             streamWriter.WriteLine("\t\tpublic override void Deserialize(Packet packet)");
             streamWriter.WriteLine("\t\t{");
-            streamWriter.WriteLine("\t\t\tbase.Deserialize(packet)");
+            streamWriter.WriteLine("\t\t\tbase.Deserialize(packet);");
             foreach (var member in members)
             {
                 member.type = member.type.Replace(" ", "");
@@ -690,16 +691,19 @@ namespace common_tool.Tools.Generate
         public static void GenerateInfrastructureFile(string targetDir, string templateType, string templateName)
         {
             string filePath = Path.Combine(targetDir, "infrastructure-config.json");
-            using (var streamWriter = new StreamWriter(filePath))
+            using (var fs = new FileStream(targetDir, FileMode.OpenOrCreate))
             {
-                streamWriter.WriteLine("{");
-                streamWriter.WriteLine("\t\"templateType\" : \"{0}\",", templateType);
-                streamWriter.WriteLine("\t\"templateName\" : \"{0}\",", templateName);
-                streamWriter.WriteLine("\t\"templateVersion\" : \"1.0.0\",");
-                streamWriter.WriteLine("\t\"databases\" : [],");
-                streamWriter.WriteLine("\t\"protocols\" : [],");
-                streamWriter.WriteLine("\t\"models\" : []");
-                streamWriter.WriteLine("}");
+                using (var streamWriter = new StreamWriter(fs, Encoding.UTF8))
+                {
+                    streamWriter.WriteLine("{");
+                    streamWriter.WriteLine("\t\"templateType\" : \"{0}\",", templateType);
+                    streamWriter.WriteLine("\t\"templateName\" : \"{0}\",", templateName);
+                    streamWriter.WriteLine("\t\"templateVersion\" : \"1.0.0\",");
+                    streamWriter.WriteLine("\t\"databases\" : [],");
+                    streamWriter.WriteLine("\t\"protocols\" : [],");
+                    streamWriter.WriteLine("\t\"models\" : []");
+                    streamWriter.WriteLine("}");
+                }
             }
 
             Console.WriteLine($"Generate InfrastructureFile : {filePath}");
