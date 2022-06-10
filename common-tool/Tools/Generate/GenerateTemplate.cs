@@ -96,17 +96,24 @@ namespace common_tool.Tools.Generate
                         Directory.CreateDirectory(clientCommonPath);
                     }
 
-                    GenerateModel(commonPath, false, namespaceValue);
-                    GenerateProtocol(commonPath, false, namespaceValue);
-                    GeneratePacket(commonPath, false, namespaceValue);
+                    GenerateModel(clientCommonPath, false, namespaceValue);
+                    GenerateProtocol(clientCommonPath, false, namespaceValue);
+                    GeneratePacket(clientCommonPath, false, namespaceValue);
                 }
 
-                GenerateController(targetDir.FullName);
-                GenerateTemplateFile(targetDir.FullName);
-                GenerateDefine(targetDir.FullName);
+                GenerateController(targetDir.FullName, true);
+                GenerateTemplateFile(targetDir.FullName, true);
+                GenerateDefine(targetDir.FullName, true);
+
+                if (string.IsNullOrEmpty(clientPath) == false)
+                {
+                    GenerateController(clientPath, false);
+                    GenerateTemplateFile(clientPath, false);
+                    GenerateDefine(clientPath, false);
+                }
             }
         }
-        void GenerateController(string targetDir)
+        void GenerateController(string targetDir, bool defineServer)
         {
             if (_config.protocols.Count == 0)
             {
@@ -127,6 +134,9 @@ namespace common_tool.Tools.Generate
                 string filePath = Path.Combine(controllerPath, protocol.name + "Controller.cs");
                 using (var streamWriter = new StreamWriter(filePath))
                 {
+                    if (defineServer == true)
+                        streamWriter.WriteLine("#define SERVER");
+
                     streamWriter.WriteLine("using System;");
                     streamWriter.WriteLine("using System.Collections.Generic;");
                     streamWriter.WriteLine("using Service.Core;");
@@ -165,7 +175,7 @@ namespace common_tool.Tools.Generate
                 }
             }
         }
-        void GenerateTemplateFile(string targetDir)
+        void GenerateTemplateFile(string targetDir, bool defineServer)
         {
             string filePath = Path.Combine(targetDir, _config.templateName + "Template.cs");
             if (File.Exists(filePath)==true)
@@ -179,6 +189,9 @@ namespace common_tool.Tools.Generate
 
             using (var streamWriter = new StreamWriter(filePath))
             {
+                if (defineServer == true)
+                    streamWriter.WriteLine("#define SERVER");
+
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine("using System.Collections.Generic;");
                 streamWriter.WriteLine("using Service.Core;");
@@ -252,7 +265,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("}");
             }
         }
-        void GenerateDefine(string targetDir)
+        void GenerateDefine(string targetDir, bool defineServer)
         {
             string filePath = Path.Combine(targetDir, _config.templateName + "Define.cs");
             if (File.Exists(filePath) == true)
@@ -264,6 +277,9 @@ namespace common_tool.Tools.Generate
             var commonNamespaceValue = Helpers.GetNameSpace(Path.Combine(targetDir, _commonDir));
             using (var streamWriter = new StreamWriter(filePath))
             {
+                if (defineServer == true)
+                    streamWriter.WriteLine("#define SERVER");
+
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine();
 
@@ -419,7 +435,8 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("{");
                 streamWriter.WriteLine("\tpublic partial class {0}Protocol", _config.templateName);
                 streamWriter.WriteLine("\t{");
-                streamWriter.WriteLine("\t\tpublic static Dictionary<ushort, ControllerDelegate> MessageControllers = new Dictionary<ushort, ControllerDelegate>();");
+
+                streamWriter.WriteLine("\t\tDictionary<ushort, ControllerDelegate> MessageControllers = new Dictionary<ushort, ControllerDelegate>();");
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic {0}Protocol()", _config.templateName);
                 streamWriter.WriteLine("\t\t{");
@@ -463,6 +480,10 @@ namespace common_tool.Tools.Generate
 
                 foreach (var protocol in _config.protocols)
                 {
+                    if (protocol.protocolType.ToLower() == "admin")
+                    {
+                        streamWriter.WriteLine("#if SERVER");
+                    }
                     switch (protocol.method.ToLower())
                     {
                         case "noti":
@@ -499,6 +520,12 @@ namespace common_tool.Tools.Generate
                             }
                             break;
                     }
+
+                    if (protocol.protocolType.ToLower() == "admin")
+                    {
+                        streamWriter.WriteLine("#endif");
+                        streamWriter.WriteLine();
+                    }
                 }
                 streamWriter.WriteLine("\t}");
                 streamWriter.WriteLine("}");
@@ -524,6 +551,10 @@ namespace common_tool.Tools.Generate
                 foreach (var protocol in _config.protocols)
                 {
                     string packetName = string.Empty;
+                    if (protocol.protocolType.ToLower() == "admin")
+                    {
+                        streamWriter.WriteLine("#if SERVER");
+                    }
                     switch (protocol.method.ToLower())
                     {
                         case "noti":
@@ -551,6 +582,12 @@ namespace common_tool.Tools.Generate
                             break;
                         default:
                             throw new Exception($"failed to generate packet. {protocol.method}");
+                    }
+
+                    if (protocol.protocolType.ToLower() == "admin")
+                    {
+                        streamWriter.WriteLine("#endif");
+                        streamWriter.WriteLine();
                     }
                 }
                 streamWriter.WriteLine("}");
