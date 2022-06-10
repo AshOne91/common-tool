@@ -222,9 +222,9 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t// TODO : 유저의 최초 생성시 필요한 DB관련 로직을 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override void OnClientUpdate(UserObject userObject)");
+                streamWriter.WriteLine("\t\tpublic override void OnClientUpdate(float dt)");
                 streamWriter.WriteLine("\t\t{");
-                streamWriter.WriteLine("\t\t\t// TODO : 유저의 로그인시 필요한 DB관련 로직을 작성");
+                streamWriter.WriteLine("\t\t\t// TODO : 템플릿 업데이트 사항 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic override void OnClientDelete(UserObject userObject)");
