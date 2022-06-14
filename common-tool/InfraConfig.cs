@@ -4,6 +4,13 @@ using System.Text;
 
 namespace common_tool
 {
+    public class InfraApplication
+    {
+        public string applicationName = string.Empty;
+        public List<string> services;
+        public List<string> templates;
+    }
+
     public class InfraTemplate
     {
         public string type = string.Empty;
