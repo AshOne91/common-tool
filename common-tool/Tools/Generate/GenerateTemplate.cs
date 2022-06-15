@@ -544,6 +544,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine("using GameBase.Template.GameBase;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase.Common;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
