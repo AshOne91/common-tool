@@ -55,7 +55,7 @@ namespace common_tool
 				{
 					FileInfo fileInfo = new FileInfo(fileEntry);
 
-					if (fileInfo.Name.StartsWith("Enum") == true)
+					if (fileInfo.Name.Contains("Enum") == true)
 					{
 						GenerateEnumTable_CSV(fileInfo, outputPath);
 					}
