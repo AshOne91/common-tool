@@ -3,32 +3,32 @@ using System.Collections.Generic;
 
 namespace common_tool.Code
 {
-	public enum AM { Public, Private, Protected, Internal, None }
+	using System.Text;
+	using System.Collections.Generic;
 
-	/// <summary>
-	/// cs를 스크립트로 생성하는 것을 생산성 좋게 하기 위해 만든 클래스입니다.
-	/// </summary>
-	public class CodeWriter
+	public enum AccessModifier { Public, Private, Protected, Internal, None }
+	public enum ClassType { None, Sealed, Abstract, Static }
+	public class CodeGenerator
 	{
+		private StringBuilder _codeGenerator;
+		private List<string> _front;
+		private Stack<string> _end;
 		private int _tabTemplate = 0;
-		private StringBuilder _codeGenerator = new StringBuilder();
-		private List<string> _front = new List<string>();
-		private Stack<string> _end = new Stack<string>();
 		private string _code = "";
 		public string Code { get { return _code; } }
-		
-		//start, end
+
+		/////////////////////////////////////////////////////
 		public void StartWritingCode()
 		{
-			_codeGenerator.Clear();
-			_tabTemplate = 0;
-			_front.Clear();
-			_end.Clear(); 
-			_code = "";
-		}
-		public string EndWritingCode()
-		{
 			_codeGenerator = new StringBuilder();
+			_front = new List<string>();
+			_end = new Stack<string>();
+			_tabTemplate = 0;
+			_code = string.Empty;
+		}
+		public void EndWritingCode()
+		{
+			_codeGenerator.Clear();
 			foreach (string s in _front)
 			{
 				_codeGenerator.Append(s);
@@ -37,54 +37,8 @@ namespace common_tool.Code
 			{
 				_codeGenerator.Append(s);
 			}
-			_code = _codeGenerator.ToString(); 
-			return _code;
+			_code = _codeGenerator.ToString();
 		}
-
-		//basic
-		/// <summary>
-		/// 기본적인 작성메소드입니다.
-		/// </summary>
-		public void WriteLine(string code = "")
-		{
-			_codeGenerator = new StringBuilder();
-			_codeGenerator.Append(code);
-			_codeGenerator.Append("\n");
-			_front.Add(_codeGenerator.ToString());
-		}
-		/// <summary>
-		/// 들여쓰기 처리가 들어있는 작성메소드입니다.
-		/// </summary>
-		public void WriteLineWithTab(string code)
-		{
-			_codeGenerator = new StringBuilder();
-			_codeGenerator.Append(GetTab());
-			_codeGenerator.Append(code);
-			_codeGenerator.Append("\n");
-			_front.Add(_codeGenerator.ToString());
-		}
-		public void WriteOpenBracket()
-		{
-			_codeGenerator = new StringBuilder();
-			_codeGenerator.Append(GetTab()); 
-			_codeGenerator.Append("{\n"); 
-			_tabTemplate += 1; 
-			_front.Add(_codeGenerator.ToString());
-		}
-		public void WriteCloseBracket()
-		{
-			_codeGenerator = new StringBuilder(); 
-			_tabTemplate -= 1;
-			_codeGenerator.Append(GetTab());
-			_codeGenerator.Append("}\n");
-			_front.Add(_codeGenerator.ToString());
-		}
-
-
-		//code template
-		/// <summary>
-		/// 현재 탭수준에 맞는 탭양식을 반환합니다.
-		/// </summary>
 		public string GetTab()
 		{
 			string tabsize = "";
@@ -95,10 +49,50 @@ namespace common_tool.Code
 			return tabsize;
 		}
 
-		//basic code template
-		public void _using(params string[] _namespaces)
+		/////////////////////////////////////////////////////
+		public void Write(string code = "")
 		{
 			_codeGenerator = new StringBuilder();
+			_codeGenerator.Append(code);
+			_front.Add(_codeGenerator.ToString());
+		}
+		public void WriteLine(string code = "")
+		{
+			_codeGenerator = new StringBuilder();
+			_codeGenerator.Append(code);
+			_codeGenerator.Append("\n");
+			_front.Add(_codeGenerator.ToString());
+		}
+		public void WriteLineWithTab(string code)
+		{
+			_codeGenerator = new StringBuilder();
+			_codeGenerator.Append(GetTab());
+			_codeGenerator.Append(code);
+			_codeGenerator.Append("\n");
+			_front.Add(_codeGenerator.ToString());
+		}
+		public void WriteOpenBracket()
+		{
+			_codeGenerator.Clear();
+			_codeGenerator.Append(GetTab());
+			_codeGenerator.Append("{\n");
+			_tabTemplate += 1;
+			_front.Add(_codeGenerator.ToString());
+		}
+		public void WriteCloseBracket()
+		{
+			_codeGenerator.Clear();
+			_tabTemplate -= 1;
+			_codeGenerator.Append(GetTab());
+			_codeGenerator.Append("}\n");
+			_front.Add(_codeGenerator.ToString());
+		}
+
+		//////////////////////////////////////////////////////basic code template
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:명명 스타일", Justification = "<보류 중>")]
+		public void _using(params string[] _namespaces)
+		{
+			_codeGenerator.Clear();
 			_codeGenerator.Append("using ");
 			for (int i = 0; i < _namespaces.Length; i++)
 			{
@@ -114,9 +108,10 @@ namespace common_tool.Code
 			}
 			_front.Add(_codeGenerator.ToString());
 		}
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:명명 스타일", Justification = "<보류 중>")]
 		public void _namespace(params string[] _namespaces)
 		{
-			_codeGenerator = new StringBuilder();
+			_codeGenerator.Clear();
 			_codeGenerator.Append("\n");
 			_codeGenerator.Append("namespace ");
 			for (int i = 0; i < _namespaces.Length; i++)
@@ -124,7 +119,7 @@ namespace common_tool.Code
 				_codeGenerator.Append(_namespaces[i]);
 				if (i == _namespaces.Length - 1)
 				{
-					_codeGenerator.Append(" {\n");
+					_codeGenerator.Append("\n{\n");
 				}
 				else
 				{
@@ -134,77 +129,95 @@ namespace common_tool.Code
 			_front.Add(_codeGenerator.ToString());
 			_end.Push("\n}");
 
-			_tabTemplate = 1;
+			_tabTemplate += 1;
 		}
-		public void _interface(AM accessModifier, string _interfaceName)
+
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:명명 스타일", Justification = "<보류 중>")]
+		public void _interface(AccessModifier accessModifier, string _interfaceName)
 		{
-			_codeGenerator = new StringBuilder();
+			_codeGenerator.Clear();
 			_codeGenerator.Append("\n");
 			_codeGenerator.Append(GetTab());
-			//접근제한자
+
 			switch (accessModifier)
 			{
-				case AM.Public:
+				case AccessModifier.Public:
 					_codeGenerator.Append("public ");
 					break;
-				case AM.Private:
+				case AccessModifier.Private:
 					_codeGenerator.Append("private ");
 					break;
-				case AM.Protected:
+				case AccessModifier.Protected:
 					_codeGenerator.Append("protected ");
 					break;
-				case AM.Internal:
+				case AccessModifier.Internal:
 					_codeGenerator.Append("internal ");
 					break;
-				case AM.None:
+				case AccessModifier.None:
 					break;
 			}
-			_codeGenerator.Append("interface");
-			_codeGenerator.Append(" ");
+			_codeGenerator.Append("interface ");
 			_codeGenerator.Append(_interfaceName);
+			_codeGenerator.Append("\n");
+			_codeGenerator.Append(GetTab());
+			_codeGenerator.Append("{");
 			_front.Add(_codeGenerator.ToString());
 
-			_codeGenerator = new StringBuilder();
+			_codeGenerator.Clear();
 			_codeGenerator.Append("\n");
 			_codeGenerator.Append(GetTab());
 			_codeGenerator.Append("}");
 			_end.Push(_codeGenerator.ToString());
-			_tabTemplate = 2;
+
+			_tabTemplate += 1;
 		}
-		public void _class(AM accessModifier, string _classType, string _className, params string[] _inheritances)
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:명명 스타일", Justification = "<보류 중>")]
+		public void _class(AccessModifier accessModifier, ClassType classType, string _className, params string[] _inheritances)
 		{
-			_codeGenerator = new StringBuilder();
+			_codeGenerator.Clear();
 			_codeGenerator.Append("\n");
 			_codeGenerator.Append(GetTab());
 
-			//접근제한자
 			switch (accessModifier)
 			{
-				case AM.Public:
+				case AccessModifier.Public:
 					_codeGenerator.Append("public ");
 					break;
-				case AM.Private:
+				case AccessModifier.Private:
 					_codeGenerator.Append("private ");
 					break;
-				case AM.Protected:
+				case AccessModifier.Protected:
 					_codeGenerator.Append("protected ");
 					break;
-				case AM.Internal:
+				case AccessModifier.Internal:
 					_codeGenerator.Append("internal ");
 					break;
-				case AM.None:
+				case AccessModifier.None:
 					break;
 			}
-			_codeGenerator.Append(_classType);
-			_codeGenerator.Append(" ");
-			_codeGenerator.Append("class");
-			_codeGenerator.Append(" ");
+			switch (classType)
+			{
+				case ClassType.None:
+					_codeGenerator.Append("class ");
+					break;
+				case ClassType.Abstract:
+					_codeGenerator.Append("abstract class");
+					break;
+				case ClassType.Static:
+					_codeGenerator.Append("static class ");
+					break;
+				case ClassType.Sealed:
+					_codeGenerator.Append("sealed class ");
+					break;
+			}
 			_codeGenerator.Append(_className);
 
 			//상속클래스, 인터페이스
 			if (_inheritances.Length == 0)
 			{
-				_codeGenerator.Append(" {\n");
+				_codeGenerator.Append("\n");
+				_codeGenerator.Append(GetTab());
+				_codeGenerator.Append("{");
 			}
 			else
 			{
@@ -215,9 +228,13 @@ namespace common_tool.Code
 						_codeGenerator.Append(" : ");
 					}
 					_codeGenerator.Append(_inheritances[i]);
+
+					//마지막이라면
 					if (i == _inheritances.Length - 1)
 					{
-						_codeGenerator.Append(" {\n");
+						_codeGenerator.Append("\n");
+						_codeGenerator.Append(GetTab());
+						_codeGenerator.Append("{\n");
 					}
 					else
 					{
@@ -227,49 +244,36 @@ namespace common_tool.Code
 			}
 			_front.Add(_codeGenerator.ToString());
 
-			_codeGenerator = new StringBuilder();
+			_codeGenerator.Clear();
 			_codeGenerator.Append("\n");
 			_codeGenerator.Append(GetTab());
 			_codeGenerator.Append("}");
 			_end.Push(_codeGenerator.ToString());
-			_tabTemplate = 2;
+
+			_tabTemplate += 1;
 		}
 
-		//member, method template
-		/// <summary>
-		/// varType
-		/// <br />
-		/// "sealed varType"
-		/// "static varType"
-		/// "override varType"
-		/// "abstract varType"
-		/// "virtual varType"
-		/// <br />
-		/// varAssignment
-		/// <br />
-		/// 선언 ";"
-		/// 할당 "= sentence;"
-		/// 프로퍼티 "{ get; set;}"
-		/// </summary>
-		public void _var(AM accessModifier, string varType, string varName, string varAssignment = "{ get; set; }")
+		////////////////////////////////////////////////////////member, method template
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:명명 스타일", Justification = "<보류 중>")]
+		public void _var(AccessModifier accessModifier, string varType, string varName, string varAssignment = "{ get; set; }")
 		{
-			_codeGenerator = new StringBuilder();
+			_codeGenerator.Clear();
 			_codeGenerator.Append(GetTab());
 			switch (accessModifier)
 			{
-				case AM.Public:
+				case AccessModifier.Public:
 					_codeGenerator.Append("public ");
 					break;
-				case AM.Private:
+				case AccessModifier.Private:
 					_codeGenerator.Append("private ");
 					break;
-				case AM.Protected:
+				case AccessModifier.Protected:
 					_codeGenerator.Append("protected ");
 					break;
-				case AM.Internal:
+				case AccessModifier.Internal:
 					_codeGenerator.Append("internal ");
 					break;
-				case AM.None:
+				case AccessModifier.None:
 					break;
 			}
 			_codeGenerator.Append(varType);
@@ -278,48 +282,41 @@ namespace common_tool.Code
 			_codeGenerator.Append(" ");
 			_codeGenerator.Append(varAssignment);
 			_codeGenerator.Append("\n");
-
 			_front.Add(_codeGenerator.ToString());
 		}
 
-		/// <summary>
-		/// implementMethods의 각 요소들은 ;로 끝을 맺어야 합니다.
-		/// </summary>
-		/// <param name="returnType">메소드 리턴타입</param>
-		/// <param name="methodName">메소드 이름</param>
-		/// <param name="haveArgu">인자값을 가지는지</param>
-		/// <param name="arguments">"Type 인자명"식으로 기입</param>
-		/// <param name="implementMethods"></param>
-		public void _method(AM accessModifier, string returnType, string methodName, bool haveArgu, string arguments, params string[] implementMethods)
+		/// <param name="returnType">메소드 리턴타입 void, int, etc...</param>
+		/// <param name="arguments">"Type 인자명, Type 인자명"식으로 기입</param>
+		/// <param name="implementMethods">각 요소들 끝에 ; 기입</param>
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:명명 스타일", Justification = "<보류 중>")]
+		public void _method(AccessModifier accessModifier, string returnType, string methodName, string arguments, params string[] implementMethods)
 		{
-			_codeGenerator = new StringBuilder();
+			_codeGenerator.Clear();
 			_codeGenerator.Append(GetTab());
 			switch (accessModifier)
 			{
-				case AM.Public:
+				case AccessModifier.Public:
 					_codeGenerator.Append("public ");
 					break;
-				case AM.Private:
+				case AccessModifier.Private:
 					_codeGenerator.Append("private ");
 					break;
-				case AM.Protected:
+				case AccessModifier.Protected:
 					_codeGenerator.Append("protected ");
 					break;
-				case AM.Internal:
+				case AccessModifier.Internal:
 					_codeGenerator.Append("internal ");
 					break;
-				case AM.None:
+				case AccessModifier.None:
 					break;
 			}
 			_codeGenerator.Append(returnType);
 			_codeGenerator.Append(" ");
 			_codeGenerator.Append(methodName);
 			_codeGenerator.Append("(");
-			if (haveArgu == true)
-			{
-				_codeGenerator.Append(arguments);
-			}
-			_codeGenerator.Append(")");
+			_codeGenerator.Append(arguments);
+			_codeGenerator.Append(")\n");
+			_codeGenerator.Append(GetTab());
 			_codeGenerator.Append("{\n");
 			_tabTemplate += 1;
 			foreach (string s in implementMethods)
@@ -329,11 +326,11 @@ namespace common_tool.Code
 				_codeGenerator.Append("\n");
 			}
 			_tabTemplate -= 1;
+			_codeGenerator.Append(GetTab());
 			_codeGenerator.Append("}\n");
+
 			_front.Add(_codeGenerator.ToString());
-
 		}
-
 	}
 }
 
