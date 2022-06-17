@@ -111,7 +111,7 @@ namespace common_tool.Tools.Generate
                     GenerateController(clientPath, false);
                     GenerateTemplateFile(clientPath, false);
                     GenerateDefine(clientPath, false);
-                    GenerateImpl(targetDir.FullName, false);
+                    GenerateImpl(clientPath, false);
                 }
             }
         }
@@ -323,7 +323,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("{");
                 streamWriter.WriteLine("\tpublic partial class {0}Impl : {1}Impl", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t{");
-                streamWriter.WriteLine("\t\tpublic {0}Impl(ImplObject obj) : base(obj){}", _config.templateName);
+                streamWriter.WriteLine("\t\tpublic {0}Impl(ImplObject obj) : base(obj){{}}", _config.templateName);
                 streamWriter.WriteLine("\t\t// TODO : ImplObject에서 사용 될 변수 선언 및 함수 구현");
                 streamWriter.WriteLine("\t}");
                 streamWriter.WriteLine("}");
@@ -479,6 +479,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("using System.Collections.Generic;");
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using Service.Core;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
@@ -779,7 +780,7 @@ namespace common_tool.Tools.Generate
         public static void GenerateInfrastructureFile(string targetDir, string templateType, string templateName)
         {
             string filePath = Path.Combine(targetDir, "infrastructure-config.json");
-            using (var fs = new FileStream(targetDir, FileMode.OpenOrCreate))
+            using (var fs = new FileStream(filePath, FileMode.OpenOrCreate))
             {
                 using (var streamWriter = new StreamWriter(fs, Encoding.UTF8))
                 {
