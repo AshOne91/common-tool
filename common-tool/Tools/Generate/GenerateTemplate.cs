@@ -104,12 +104,14 @@ namespace common_tool.Tools.Generate
                 GenerateController(targetDir.FullName, true);
                 GenerateTemplateFile(targetDir.FullName, true);
                 GenerateDefine(targetDir.FullName, true);
+                GenerateImpl(targetDir.FullName, true);
 
                 if (string.IsNullOrEmpty(clientPath) == false)
                 {
                     GenerateController(clientPath, false);
                     GenerateTemplateFile(clientPath, false);
                     GenerateDefine(clientPath, false);
+                    GenerateImpl(targetDir.FullName, false);
                 }
             }
         }
@@ -154,17 +156,17 @@ namespace common_tool.Tools.Generate
                     {
                         case "noti":
                             {
-                                streamWriter.WriteLine("\t\tpublic void ON_{0}_NOTI_CALLBACK(UserObject userObject, PACKET_{1}_NOTI packet)", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic void ON_{0}_NOTI_CALLBACK(ImplObject userObject, PACKET_{1}_NOTI packet)", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t{");
                                 streamWriter.WriteLine("\t\t\t");
                                 streamWriter.WriteLine("\t\t}");
                             }
                             break;
                         case "react":
-                            streamWriter.WriteLine("\t\tpublic void ON_{0}_REQ_CALLBACK(UserObject userObject, PACKET_{1}_REQ packet)", protocol.name, protocol.name);
+                            streamWriter.WriteLine("\t\tpublic void ON_{0}_REQ_CALLBACK(ImplObject userObject, PACKET_{1}_REQ packet)", protocol.name, protocol.name);
                             streamWriter.WriteLine("\t\t{");
                             streamWriter.WriteLine("\t\t}");
-                            streamWriter.WriteLine("\t\tpublic void ON_{0}_RES_CALLBACK(UserObject userObject, PACKET_{1}_RES packet)", protocol.name, protocol.name);
+                            streamWriter.WriteLine("\t\tpublic void ON_{0}_RES_CALLBACK(ImplObject userObject, PACKET_{1}_RES packet)", protocol.name, protocol.name);
                             streamWriter.WriteLine("\t\t{");
                             streamWriter.WriteLine("\t\t}");
                             break;
@@ -205,6 +207,7 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("\tpublic partial class {0}Template : {1}Template", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t{");
+                streamWriter.WriteLine("\t\tImplObject _obj = null;");
                 streamWriter.WriteLine("\t\tpublic override void Init(TemplateConfig config)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tbase.Init(config);");
@@ -217,8 +220,10 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t// TODO : 로드할 데이터를 연결");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override void OnClientCreate(UserObject userObject)");
+                streamWriter.WriteLine("\t\tpublic override void OnClientCreate(ImplObject userObject)");
                 streamWriter.WriteLine("\t\t{");
+                streamWriter.WriteLine("\t\t\t_obj = userObject;");
+                streamWriter.WriteLine("\t\t\t_obj{0}Impl = new {1}Impl(_obj);", words[1], words[1]);
                 streamWriter.WriteLine("\t\t\t// TODO : 유저의 최초 생성시 필요한 DB관련 로직을 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
@@ -227,37 +232,37 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t// TODO : 템플릿 업데이트 사항 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override void OnClientDelete(UserObject userObject)");
+                streamWriter.WriteLine("\t\tpublic override void OnClientDelete(ImplObject userObject)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t// TODO : 계정 초기화시 사용 템플릿에 보유한 내역듣 삭제");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override (List<ItemBaseInfo> listItemInfo, List<QuestCompleteParam> listQuestCompleteParam) OnAddItem(UserObject userObject, int itemId, long value, int parentItemId, int groupIndex)");
+                streamWriter.WriteLine("\t\tpublic override (List<ItemBaseInfo> listItemInfo, List<QuestCompleteParam> listQuestCompleteParam) OnAddItem(ImplObject userObject, int itemId, long value, int parentItemId, int groupIndex)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn (null, null);");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override (List<ItemBaseInfo> listItemInfo, List<QuestCompleteParam> listQuestCompleteParam) OnDeleteItem(UserObject userObject, int itemId, long value, int parentItemId, int groupIndex)");
+                streamWriter.WriteLine("\t\tpublic override (List<ItemBaseInfo> listItemInfo, List<QuestCompleteParam> listQuestCompleteParam) OnDeleteItem(ImplObject userObject, int itemId, long value, int parentItemId, int groupIndex)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn (null, null);");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override (List<ItemBaseInfo> listItemInfo, List<QuestCompleteParam> listQuestCompleteParam) AddRandomReward(UserObject userObject, int classId, int grade, int kind, long value, int parentItemId, int groupIndex)");
+                streamWriter.WriteLine("\t\tpublic override (List<ItemBaseInfo> listItemInfo, List<QuestCompleteParam> listQuestCompleteParam) AddRandomReward(ImplObject userObject, int classId, int grade, int kind, long value, int parentItemId, int groupIndex)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn (null, null);");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override bool OnHasItemId(UserObject userObject, int itemId)");
+                streamWriter.WriteLine("\t\tpublic override bool OnHasItemId(ImplObject userObject, int itemId)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn false;");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override bool OnHasItemType(UserObject userObject, int itemType)");
+                streamWriter.WriteLine("\t\tpublic override bool OnHasItemType(ImplObject userObject, int itemType)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn false;");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic override bool OnHasItemSubType(UserObject userObject, int subType)");
+                streamWriter.WriteLine("\t\tpublic override bool OnHasItemSubType(ImplObject userObject, int subType)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn false;");
                 streamWriter.WriteLine("\t\t}");
@@ -289,6 +294,41 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("}");
             }
         }
+        void GenerateImpl(string targetDir, bool defineServer)
+        {
+            string filePath = Path.Combine(targetDir, _config.templateName + "Impl.cs");
+            if (File.Exists(filePath) == true)
+            {
+                return;
+            }
+
+            var namespaceValue = Helpers.GetNameSpace(targetDir);
+            var commonNamespaceValue = Helpers.GetNameSpace(Path.Combine(targetDir, _commonDir));
+            var words = namespaceValue.Split(".");
+
+            using (var streamWriter = new StreamWriter(filePath))
+            {
+                if (defineServer == true)
+                    streamWriter.WriteLine("#define SERVER");
+
+                streamWriter.WriteLine("using System;");
+                streamWriter.WriteLine("using System.Collections.Generic;");
+                streamWriter.WriteLine("using Service.Net;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase.Common;");
+                streamWriter.WriteLine("using GameBase.{0};", commonNamespaceValue);
+                streamWriter.WriteLine();
+
+                streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
+                streamWriter.WriteLine("{");
+                streamWriter.WriteLine("\tpublic partial class {0}Impl : {1}Impl", _config.templateName, words[1]);
+                streamWriter.WriteLine("\t{");
+                streamWriter.WriteLine("\t\tpublic {0}Impl(ImplObject obj) : base(obj){}", _config.templateName);
+                streamWriter.WriteLine("\t\t// TODO : ImplObject에서 사용 될 변수 선언 및 함수 구현");
+                streamWriter.WriteLine("\t}");
+                streamWriter.WriteLine("}");
+            }
+        }
         void GenerateModel(string targetDir, bool defineServer, string namespaceValue)
         {
             string filePath = Path.Combine(targetDir, _config.templateName + "Model.cs");
@@ -299,6 +339,7 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine("using System.Collections.Generic;");
+                streamWriter.WriteLine("using System.Reflection;");
                 streamWriter.WriteLine("using System.Numerics;");
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using Service.Core;");
@@ -411,8 +452,17 @@ namespace common_tool.Tools.Generate
                         }
                     }
                     streamWriter.WriteLine("\t\t}");
+                    streamWriter.WriteLine("\t\tpublic string GetLog()");
+                    streamWriter.WriteLine("\t\t{");
+                    streamWriter.WriteLine("\t\t\tstring log = \"\";");
+                    streamWriter.WriteLine("\t\t\tFieldInfo[] fields = this.GetType().GetFields();");
+                    streamWriter.WriteLine("\t\t\tforeach (FieldInfo field in fields)");
+                    streamWriter.WriteLine("\t\t\t{");
+                    streamWriter.WriteLine("\t\t\t\tlog += string.Format(\"{{0}}={{1}}\\r\\n\", field.Name, field.GetValue(this).ToString());");
+                    streamWriter.WriteLine("\t\t\t}");
+                    streamWriter.WriteLine("\t\t\treturn log;");
+                    streamWriter.WriteLine("\t\t}");
                     streamWriter.WriteLine("\t}");
-
                 }
                 streamWriter.WriteLine("}");
             }
@@ -466,7 +516,7 @@ namespace common_tool.Tools.Generate
                 }
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic virtual bool OnPacket(UserObject userObject, ushort protocolId, Packet packet)");
+                streamWriter.WriteLine("\t\tpublic virtual bool OnPacket(ImplObject userObject, ushort protocolId, Packet packet)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tControllerDelegate controllerCallback;");
                 streamWriter.WriteLine("\t\t\tif(MessageControllers.TryGetValue(protocolId, out controllerCallback) == false)");
@@ -488,9 +538,9 @@ namespace common_tool.Tools.Generate
                     {
                         case "noti":
                             {
-                                streamWriter.WriteLine("\t\tpublic delegate void {0}_NOTI_CALLBACK(UserObject userObject, PACKET_{1}_NOTI packet);", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic delegate void {0}_NOTI_CALLBACK(ImplObject userObject, PACKET_{1}_NOTI packet);", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\tpublic {0}_NOTI_CALLBACK ON_{1}_NOTI_CALLBACK;", protocol.name, protocol.name);
-                                streamWriter.WriteLine("\t\tpublic void {0}_NOTI_CONTROLLER(UserObject obj, Packet packet)", protocol.name);
+                                streamWriter.WriteLine("\t\tpublic void {0}_NOTI_CONTROLLER(ImplObject obj, Packet packet)", protocol.name);
                                 streamWriter.WriteLine("\t\t{");
                                 streamWriter.WriteLine("\t\t\tPACKET_{0}_NOTI recvPacket = new PACKET_{1}_NOTI();", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t\trecvPacket.Deserialize(packet);");
@@ -500,18 +550,18 @@ namespace common_tool.Tools.Generate
                             break;
                         case "react":
                             {
-                                streamWriter.WriteLine("\t\tpublic delegate void {0}_REQ_CALLBACK(UserObject userObject, PACKET_{1}_REQ packet);", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic delegate void {0}_REQ_CALLBACK(ImplObject userObject, PACKET_{1}_REQ packet);", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\tpublic {0}_REQ_CALLBACK ON_{1}_REQ_CALLBACK;", protocol.name, protocol.name);
-                                streamWriter.WriteLine("\t\tpublic void {0}_REQ_CONTROLLER(UserObject obj, Packet packet)", protocol.name);
+                                streamWriter.WriteLine("\t\tpublic void {0}_REQ_CONTROLLER(ImplObject obj, Packet packet)", protocol.name);
                                 streamWriter.WriteLine("\t\t{");
                                 streamWriter.WriteLine("\t\t\tPACKET_{0}_REQ recvPacket = new PACKET_{1}_REQ();", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t\trecvPacket.Deserialize(packet);");
                                 streamWriter.WriteLine("\t\t\tON_{0}_REQ_CALLBACK(obj, recvPacket);", protocol.name);
                                 streamWriter.WriteLine("\t\t}");
 
-                                streamWriter.WriteLine("\t\tpublic delegate void {0}_RES_CALLBACK(UserObject userObject, PACKET_{1}_RES packet);", protocol.name, protocol.name);
+                                streamWriter.WriteLine("\t\tpublic delegate void {0}_RES_CALLBACK(ImplObject userObject, PACKET_{1}_RES packet);", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\tpublic {0}_RES_CALLBACK ON_{1}_RES_CALLBACK;", protocol.name, protocol.name);
-                                streamWriter.WriteLine("\t\tpublic void {0}_RES_CONTROLLER(UserObject obj, Packet packet)", protocol.name);
+                                streamWriter.WriteLine("\t\tpublic void {0}_RES_CONTROLLER(ImplObject obj, Packet packet)", protocol.name);
                                 streamWriter.WriteLine("\t\t{");
                                 streamWriter.WriteLine("\t\t\tPACKET_{0}_RES recvPacket = new PACKET_{1}_RES();", protocol.name, protocol.name);
                                 streamWriter.WriteLine("\t\t\trecvPacket.Deserialize(packet);");
