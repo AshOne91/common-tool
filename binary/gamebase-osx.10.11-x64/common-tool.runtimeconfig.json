@@ -6,6 +6,9 @@
         "name": "Microsoft.NETCore.App",
         "version": "3.1.24"
       }
-    ]
+    ],
+    "configProperties": {
+      "System.Reflection.Metadata.MetadataUpdater.IsSupported": false
+    }
   }
 }

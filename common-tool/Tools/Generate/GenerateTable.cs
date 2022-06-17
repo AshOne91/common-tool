@@ -72,14 +72,14 @@ namespace common_tool
 			}
 			return true;
 		}
-		
-		private void GenerateDataTable_CSV(FileInfo fileInfo, string outputPath)
+
+		private static void GenerateDataTable_CSV(FileInfo fileInfo, string outputPath)
 		{
 			List<string> fields = new List<string>();//요소명
 			List<string> fieldTypes = new List<string>();//요소타입
 			List<int> exceptIndex = new List<int>();//제외요소
 
-			//1. 데이터를 읽어올 파일들을 불러온다.
+			//1. 파일에서 사용할 요소 이름과 자료타입 불러온다.
 			using (var reader = new StreamReader(fileInfo.FullName))
 			{
 				int row = 0;
@@ -175,16 +175,15 @@ namespace common_tool
 				CodeGenerator cg = new CodeGenerator();
 				cg.StartWritingCode();
 				cg._using("System");
-
 				cg._using("System", "Collections", "Generic");
 
 				if (tableClass == string.Empty)
 				{
-					cg._namespace("UBF", "DataTable");
+					cg._namespace("UBF", "Table");
 				}
 				else
 				{
-					cg._namespace("UBF", "DataTable", tableClass);
+					cg._namespace("UBF", "Table", tableClass);
 				}
 				cg._class(AccessModifier.Public, ClassType.None, titleTemplate, "IDataTable");
 
@@ -195,7 +194,7 @@ namespace common_tool
 				cg.WriteLine();
 				cg.WriteLine();
 
-				string[] methodImplement = new string[fields.Count];
+				string[] methodImplements = new string[fields.Count];
 				for (int i = 0; i < fields.Count; i++)
 				{
 					string Implement = string.Empty;
@@ -234,23 +233,25 @@ namespace common_tool
 							Implement = $"{fields[i]} = ({fieldTypes[i]})Enum.Parse(typeof({fieldTypes[i]}), data[\"{fields[i]}\"]);";
 							break;
 					}
-					methodImplement[i] = $"if (data.ContainsKey(\"{fields[i]}\") == true) {Implement}";
+					methodImplements[i] = $"if (data.ContainsKey(\"{fields[i]}\") == true) {Implement}";
 				}
 
-				cg._method(AccessModifier.Public, "void", "Serialize", "Dictionary<string, string> data", methodImplement);
+				cg._method(AccessModifier.Public, "void", "Serialize", "Dictionary<string, string> data", methodImplements);
 				cg.EndWritingCode();
 				streamWriter.Write(cg.Code);
 				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}/{ titleTemplate}.cs 작업완료");
 			}
 		}
-		private void GenerateEnumTable_CSV(FileInfo fileInfo, string outputPath)
+		private static void GenerateEnumTable_CSV(FileInfo fileInfo, string outputPath)
 		{
-			List<string> fields = new List<string>();//요소들 : 데이터 읽을때 필요
+			List<string> fieldTypes = new List<string>();//요소형식 : 데이터 읽을때 필요
 			Dictionary<string, string> enumByID = new Dictionary<string, string>();//ID별 enum: 데이터 읽을때 필요
 
 			List<string> enumNames = new List<string>();//Enum 이름 : 데이터를 작성할때 필요
 			List<string> enumTypes = new List<string>();//Enum 형식 : 데이터를 작성할때 필요
 			Dictionary<string, List<string>> valuesByEnum = new Dictionary<string, List<string>>();//enum별 값들: 데이터를 작성할때 필요
+
+			List<int> enumIDsWithStringID = new List<int>();//StringID를 가진 enum의 ClassID
 
 			//1. 데이터를 읽어올 파일들을 불러온다.
 			using (var reader = new StreamReader(fileInfo.FullName))
@@ -278,7 +279,7 @@ namespace common_tool
 						case 0://필드요소 분리
 							for (int i = 0; i < cols.Count; i++)
 							{
-								fields.Add(cols[i]);
+								fieldTypes.Add(cols[i]);
 								//fields
 								//{ID, Enum, EnumType, ~Comment, StringID}
 							}
@@ -292,7 +293,6 @@ namespace common_tool
 								enumByID.Add(cols[0], cols[1]);
 								//아랫줄에서 읽기위해서 저장
 							}
-							//enumName = cols[1]//현재 줄에서만 가능
 							//enumName = enumByID[cols[0]]
 
 							//가독성
@@ -325,35 +325,44 @@ namespace common_tool
 									//enumType저장 (DataBind ID => EnumName, EnumType)
 									enumTypes.Add(cols[2]);
 								}
-								//cols[3] Comment
-								if (valuesByEnum.ContainsKey($"{enumName}_Comment") == false)
+								//cols[3] enumComment
+								if (valuesByEnum.ContainsKey($"{enumName}_EnumComment") == false)
 								{
-									valuesByEnum.Add($"{enumName}_Comment", new List<string>(1));
-									valuesByEnum[$"{enumName}_Comment"].Add(cols[3]);
+									valuesByEnum.Add($"{enumName}_EnumComment", new List<string>(1));
+									valuesByEnum[$"{enumName}_EnumComment"].Add(cols[3]);
 									//enum의 comment(주의: enumMember의 Comment가 아니다.)
 								}
 								//cols[4] stringID
 								if (valuesByEnum.ContainsKey($"{enumName}_StringID") == false)
 								{
 									valuesByEnum.Add($"{enumName}_StringID", new List<string>());
-									//enum에 string ID?
-									//valuesByEnum[$"{enumName}_StringID"].Add(cols[4]);
 
+									if (cols[4] != "")//EnumName 분류행에 StringID가 기입된 경우 StringID를 쓰는 Enum
+									{
+										//stringID가 있는 enum의 classID에 저장
+										enumIDsWithStringID.Add(int.Parse(enumID));
+										valuesByEnum.Add($"{enumName}_StringIDComment", new List<string>());
+										valuesByEnum[$"{enumName}_StringIDComment"].Add(cols[4]);
+									}
+
+									//stringIDComment입니다 StringID
 								}
+								//////////////////////////////////////////////////////////////////////////
 							}
 							//같은 enum을 작업
 							else
 							{
 								//가독성
-								enumName = enumByID[cols[0]];
+								enumID = cols[0];
+								enumName = enumByID[enumID];
 
 								for (int i = 0; i < cols.Count; i++)
 								{
-									if (fields[i].StartsWith("StringID"))
+									if (fieldTypes[i].StartsWith("StringID"))
 									{
 										valuesByEnum[$"{enumName}_StringID"].Add(cols[i]);
 									}
-									else if (fields[i].StartsWith("~"))
+									else if (fieldTypes[i].StartsWith("~"))
 									{
 										if (valuesByEnum.ContainsKey($"{enumName}_MemberComment") == false)
 										{
@@ -361,11 +370,12 @@ namespace common_tool
 										}
 										valuesByEnum[$"{enumName}_MemberComment"].Add(cols[i]);
 									}
-									else if (fields[i].StartsWith("EnumType"))
+									else if (fieldTypes[i].StartsWith("EnumType"))
 									{
 										//가독성
-										int enumClassID = enumNames.IndexOf(enumName);
-										switch (enumTypes[enumClassID])
+										int enumNumber = enumNames.IndexOf(enumName);
+
+										switch (enumTypes[enumNumber])
 										{
 											case "default":
 												valuesByEnum[$"{enumName}_Type"].Add($"{valuesByEnum[enumName].Count - 1}");
@@ -375,12 +385,12 @@ namespace common_tool
 												valuesByEnum[$"{enumName}_Type"].Add(cols[i]);
 												break;
 											default:
-												Console.WriteLine($"{fileInfo.FullName}의 {fields[i]}_AssociatedType이 잘못되었습니다. flags, int, default 3가지 유형중 하나여야 합니다.");
+												Console.WriteLine($"{fileInfo.FullName}의 {fieldTypes[i]}_AssociatedType이 잘못되었습니다. flags, int, default 3가지 유형중 하나여야 합니다.");
 												break;
 
 										}
 									}
-									else if (fields[i].StartsWith("Enum"))
+									else if (fieldTypes[i].StartsWith("Enum"))
 									{
 										valuesByEnum[enumName].Add(cols[i]);
 									}
@@ -428,17 +438,15 @@ namespace common_tool
 				//using
 				cg._using("System");
 
-
 				//namespace
-				if (tableClass == "")//테이블클래스가 없다면
+				if (tableClass == "")//테이블 클래스가 없다면
 				{
-					cg._namespace("UBF", "DataTable");
+					cg._namespace("UBF", "Table");
 				}
 				else
 				{
-					cg._namespace("UBF", "DataTable", tableClass);
+					cg._namespace("UBF", "Table", tableClass);
 				}
-
 
 				//enums
 				for (int i = 0; i < enumNames.Count; i++)
@@ -446,58 +454,121 @@ namespace common_tool
 					//가독성
 					string enumName = enumNames[i];
 					string enumType = enumTypes[i];
+					int enumMemberCount = valuesByEnum[enumName].Count;
 
 					//each enum comment
-					if (valuesByEnum.ContainsKey($"{enumName}_Comment"))
+					if (valuesByEnum.ContainsKey($"{enumName}_EnumComment"))
 					{
-						if (valuesByEnum[$"{enumName}_Comment"][0] != "")
+						if (valuesByEnum[$"{enumName}_EnumComment"][0] != "")
 						{
-							cg.WriteLineWithTab($"// {valuesByEnum[$"{enumName}_Comment"][0]}");
+							cg.WriteLineTab($"// {valuesByEnum[$"{enumName}_EnumComment"][0]}");
 						}
 					}
 
 					//each enum type option
 					if (enumType == "flags")
 					{
-						cg.WriteLineWithTab("[Flags]");
-						cg.WriteLineWithTab($"public enum {enumName} : uint");//ushort
+						cg.WriteLineTab("[Flags]");
+						cg.WriteLineTab($"public enum {enumName} : uint");//ushort
 					}
 					else
 					{
-						cg.WriteLineWithTab($"public enum {enumName}");
+						cg.WriteLineTab($"public enum {enumName}");
 					}
 
 					//each enum implements
 					cg.WriteOpenBracket();
 
-					//가독성
-					int enumMemberCount = valuesByEnum[enumName].Count;
 					for (int n = 0; n < enumMemberCount; n++)
 					{
-						cg.WriteLineWithTab($"{valuesByEnum[enumName][n]} = {valuesByEnum[$"{enumName}_Type"][n]}, // {valuesByEnum[$"{enumName}_MemberComment"][n]}");
+						cg.WriteLineTab($"{valuesByEnum[enumName][n]} = {valuesByEnum[$"{enumName}_Type"][n]}, // {valuesByEnum[$"{enumName}_MemberComment"][n]}");
 					}
-
 					cg.WriteCloseBracket();
-
-					//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
 				}
 
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
-				//stringID 사용하는 무언가를 만들어야하긴하는데; 모르겟다.
 
 				cg.EndWritingCode();
 				streamWriter.Write(cg.Code);
 				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}/{ titleTemplate}.cs 작업완료");
 			}
+
+
+
+
+			using (var streamWriter2 = new StreamWriter($"{outputPath}/{titleTemplate}StringID.cs"))
+			{
+				CodeGenerator cg = new CodeGenerator();
+				cg.StartWritingCode();
+
+				//using
+				cg._using("System.Collections");
+				cg._using("System.Collections.Generic");
+
+				//namespace
+				if (tableClass == "")//테이블 클래스가 없다면
+				{
+					cg._namespace("UBF", "Table");
+				}
+				else
+				{
+					cg._namespace("UBF", "Table", tableClass);
+				}
+
+				cg._class(AccessModifier.Public, ClassType.Static, "StringID");
+
+				cg.WriteLineTab("//Enum별 StringID묶음");
+				cg._var(AccessModifier.Private, "readonly static Dictionary<string, IDictionary>",
+					"STRINGID_BINDING_BY_ENUM", " = new Dictionary<string, IDictionary>();");
+
+				cg.WriteLine();
+
+
+				List<string> methodImplements = new List<string>();
+				methodImplements.Add("IDictionary enumStringID;");
+				methodImplements.Add("");
+
+				//stringID를 가진 enum의 수
+				for (int i = 0; i < enumIDsWithStringID.Count; i++)
+				{
+					string enumName = enumNames[enumIDsWithStringID[i]];
+					int enumMemberCount = valuesByEnum[enumName].Count;
+
+					methodImplements.Add($"//enum : {valuesByEnum[$"{enumName}_EnumComment"][0]}");
+					methodImplements.Add($"//stringID : {valuesByEnum[$"{enumName}_StringIDComment"][0]}");
+					methodImplements.Add($"Dictionary<{enumName}, string> stringIDByEnumMember_{enumName} = new Dictionary<{enumName}, string>();");
+					methodImplements.Add($"enumStringID = stringIDByEnumMember_{enumName};");
+					methodImplements.Add($"STRINGID_BINDING_BY_ENUM[nameof({enumName})] = enumStringID; ");
+					methodImplements.Add("");
+
+					//enum의 멤버수
+					for (int n = 0; n < enumMemberCount; n++)
+					{
+						methodImplements.Add($"enumStringID[{enumName}.{valuesByEnum[enumName][n]}] = \"{valuesByEnum[$"{enumName}_StringID"][n]}\"; //{valuesByEnum[$"{enumName}_MemberComment"][n]}");
+					}
+					methodImplements.Add("");
+					methodImplements.Add("");
+					methodImplements.Add("");
+				}
+
+
+				string[] methodImplement = methodImplements.ToArray();
+				cg._method(AccessModifier.None, "static", "StringID", "", methodImplement);
+
+				//stringID를 가진 enum의 수
+				for (int i = 0; i < enumIDsWithStringID.Count; i++)
+				{
+					string enumName = enumNames[enumIDsWithStringID[i]];
+					methodImplement = new string[1];
+					methodImplement[0] = $"return STRINGID_BINDING_BY_ENUM[nameof({enumName})][args{enumName}] as string;";
+					cg._method(AccessModifier.Public, "static string", "GetFrom", $"{enumName} args{enumName}", methodImplement);
+				}
+
+
+				cg.EndWritingCode();
+				streamWriter2.Write(cg.Code);
+				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}/{ titleTemplate}_StringID.cs 작업완료");
+			}
 		}
+
 	}
 }
