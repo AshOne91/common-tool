@@ -1,7 +1,4 @@
-﻿using System.Text;
-using System.Collections.Generic;
-
-namespace common_tool.Code
+﻿namespace common_tool.Code
 {
 	using System.Text;
 	using System.Collections.Generic;
@@ -63,7 +60,7 @@ namespace common_tool.Code
 			_codeGenerator.Append("\n");
 			_front.Add(_codeGenerator.ToString());
 		}
-		public void WriteLineWithTab(string code)
+		public void WriteLineTab(string code)
 		{
 			_codeGenerator = new StringBuilder();
 			_codeGenerator.Append(GetTab());
@@ -217,7 +214,7 @@ namespace common_tool.Code
 			{
 				_codeGenerator.Append("\n");
 				_codeGenerator.Append(GetTab());
-				_codeGenerator.Append("{");
+				_codeGenerator.Append("{\n");
 			}
 			else
 			{
