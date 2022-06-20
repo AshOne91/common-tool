@@ -208,9 +208,11 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\tpublic partial class {0}Template : {1}Template", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t{");
                 streamWriter.WriteLine("\t\tImplObject _obj = null;");
+                streamWriter.WriteLine("\t\t{0}Impl _Impl = null", _config.templateName);
                 streamWriter.WriteLine("\t\tpublic override void Init(TemplateConfig config)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tbase.Init(config);");
+                streamWriter.WriteLine("\t\t\t_Impl = new {0}Impl(null);", _config.templateName);
                 streamWriter.WriteLine("\t\t\t//OnLoadData(config)");
                 streamWriter.WriteLine("\t\t\t// TODO : 서버 기동시 실행할 템플릿 관련 로직을 아래에 작성");
                 streamWriter.WriteLine("\t\t}");
@@ -245,11 +247,6 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t\t\t\t_obj.{0}Impl = new {1}GameImpl(_obj);", words[1], _config.templateName);
                 streamWriter.WriteLine("\t\t\t\t\t}");
                 streamWriter.WriteLine("\t\t\t\t\tbreak;");
-                streamWriter.WriteLine("\t\t\t\tcase ObjectType.default:");
-                streamWriter.WriteLine("\t\t\t\t\t{");
-                streamWriter.WriteLine("\t\t\t\t\t\t_obj.{0}Impl = new {1}Impl(_obj);", words[1], _config.templateName);
-                streamWriter.WriteLine("\t\t\t\t\t}");
-                streamWriter.WriteLine("\t\t\t\t\tbreak;");
                 streamWriter.WriteLine("\t\t\t}");
                 streamWriter.WriteLine("\t\t\t// TODO : 유저의 최초 생성시 필요한 DB관련 로직을 작성");
                 streamWriter.WriteLine("\t\t}");
@@ -257,6 +254,11 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\tpublic T Get{0}Impl<T>() where T : {1}Impl", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn _obj.{0}Impl as T", words[1]);
+                streamWriter.WriteLine("\t\t}");
+                streamWriter.WriteLine();
+                streamWriter.WriteLine("\t\tpublic {0}Impl Get{1}Impl<T>()", _config.templateName, _config.templateName);
+                streamWriter.WriteLine("\t\t{");
+                streamWriter.WriteLine("\t\t\treturn _Impl;");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic override void OnClientUpdate(float dt)");
