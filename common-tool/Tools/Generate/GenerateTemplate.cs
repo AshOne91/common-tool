@@ -223,7 +223,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\tpublic override void OnClientCreate(ImplObject userObject)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t_obj = userObject;");
-                streamWriter.WriteLine("\t\t\t_obj{0}Impl = new {1}Impl(_obj);", words[1], words[1]);
+                streamWriter.WriteLine("\t\t\t_obj.{0}Impl = new {1}Impl(_obj);", words[1], words[1]);
                 streamWriter.WriteLine("\t\t\t// TODO : 유저의 최초 생성시 필요한 DB관련 로직을 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
