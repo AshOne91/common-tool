@@ -208,7 +208,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\tpublic partial class {0}Template : {1}Template", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t{");
                 streamWriter.WriteLine("\t\tImplObject _obj = null;");
-                streamWriter.WriteLine("\t\t{0}Impl _Impl = null", _config.templateName);
+                streamWriter.WriteLine("\t\tstatic {0}Impl _Impl = null", _config.templateName);
                 streamWriter.WriteLine("\t\tpublic override void Init(TemplateConfig config)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tbase.Init(config);");
@@ -256,7 +256,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\treturn _obj.{0}Impl as T", words[1]);
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic {0}Impl Get{1}Impl<T>()", _config.templateName, _config.templateName);
+                streamWriter.WriteLine("\t\tpublic static {0}Impl Get{1}Impl<T>()", _config.templateName, _config.templateName);
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn _Impl;");
                 streamWriter.WriteLine("\t\t}");
