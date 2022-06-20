@@ -484,7 +484,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t_protocolByUid.Add(uid, protocol);");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic static bool OnPacket(UserObject obj, ushort protocolId, Packet packet)");
+                streamWriter.WriteLine("\t\tpublic static bool OnPacket(ImplObject obj, ushort protocolId, Packet packet)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tulong uid = obj.GetSession().GetUid();");
                 streamWriter.WriteLine("\t\t\tif (_protocolByUid.ContainsKey(uid) == false)");
