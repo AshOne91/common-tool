@@ -406,6 +406,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\tpublic override void OnUpdate(float dt)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tGameBaseTemplateContext.UpdateClient(dt);");
+                streamWriter.WriteLine("\t\t\tGameBaseTemplateContext.UpdateTemplate(dt);");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine("\t}");
                 streamWriter.WriteLine("}");

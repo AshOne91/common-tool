@@ -261,6 +261,11 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\treturn _Impl;");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
+                streamWriter.WriteLine("\t\tpublic virtual void OnTemplateUpdate(float dt)");
+                streamWriter.WriteLine("\t\t{");
+                streamWriter.WriteLine("\t\t\t// TODO : 템플릿 업데이트 사항 작성(유저X)");
+                streamWriter.WriteLine("\t\t}");
+                streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic override void OnClientUpdate(float dt)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t// TODO : 템플릿 업데이트 사항 작성");
