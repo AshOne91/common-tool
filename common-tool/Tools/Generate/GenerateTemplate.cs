@@ -352,6 +352,7 @@ namespace common_tool.Tools.Generate
 
                 streamWriter.WriteLine("using System;");
                 streamWriter.WriteLine("using System.Collections.Generic;");
+                streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using GameBase.Template.GameBase;");
                 streamWriter.WriteLine("using GameBase.Template.GameBase.Common;");
