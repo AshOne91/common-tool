@@ -363,8 +363,8 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("{");
                 streamWriter.WriteLine("\tpublic partial class {0}Impl : {1}Impl", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t{");
-                streamWriter.WriteLine("\t\tpublic {0}Impl(ImplObject obj) : base(obj){{}}", _config.templateName);
-                streamWriter.WriteLine("\t\t// TODO : ImplObject에서 사용 될 변수 선언 및 함수 구현");
+                streamWriter.WriteLine("\t\tpublic {0}Impl(ServerType type) : base(type){{}}", _config.templateName);
+                streamWriter.WriteLine("\t\t// TODO : 서버에서 사용 될 변수 선언 및 함수 구현");
                 streamWriter.WriteLine("\t}");
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\tpublic partial class {0}MasterImpl : {1}Impl", _config.templateName, words[1]);
