@@ -209,10 +209,10 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t{");
                 streamWriter.WriteLine("\t\tImplObject _obj = null;");
                 streamWriter.WriteLine("\t\tstatic {0}Impl _Impl = null", _config.templateName);
-                streamWriter.WriteLine("\t\tpublic override void Init(TemplateConfig config)");
+                streamWriter.WriteLine("\t\tpublic override void Init(TemplateConfig config, ServerType type)");
                 streamWriter.WriteLine("\t\t{");
-                streamWriter.WriteLine("\t\t\tbase.Init(config);");
-                streamWriter.WriteLine("\t\t\t_Impl = new {0}Impl(null);", _config.templateName);
+                streamWriter.WriteLine("\t\t\tbase.Init(config, type);");
+                streamWriter.WriteLine("\t\t\t_Impl = new {0}Impl(type);", _config.templateName);
                 streamWriter.WriteLine("\t\t\t//OnLoadData(config)");
                 streamWriter.WriteLine("\t\t\t// TODO : 서버 기동시 실행할 템플릿 관련 로직을 아래에 작성");
                 streamWriter.WriteLine("\t\t}");
