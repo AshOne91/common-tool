@@ -87,16 +87,21 @@ namespace common_tool
 				{
 					var line = reader.ReadLine();
 
-					//""제거구문
+					//"를 표현하기 위함
+					line = line.Replace("\"\"", "{&}");
+					//,를 표현하기 위함
 					int replaceIndex = line.IndexOf("\"");
+					//줄에 "가 없을때까지(csv는 요소에 ,가 추가되면 요소를 ""로 감쌈)
 					while (replaceIndex != -1)
 					{
-						var originText = line.Substring(replaceIndex, line.IndexOf("\"", replaceIndex + 1) - replaceIndex + ("\"").Length);
-						var replaceText = originText.Replace(",", "{$}");
-						replaceText = replaceText.Replace("\"", "");
-						line = line.Replace(originText, replaceText);
+						var originText = line.Substring(replaceIndex, line.IndexOf("\"", replaceIndex + 1) - replaceIndex + 1);
+						var replaceText = originText.Replace(",", "{$}");//요소로 검색되지않게 처리
+						replaceText = replaceText.Replace("\"", "");//" 삭제처리
+						line = line.Replace(originText, replaceText);// 처리후 변경
+																	 //다음 "" 검색
 						replaceIndex = line.IndexOf("\"");
-					};
+					}
+					line = line.Replace("{&}", "\"");
 
 					List<string> cols = new List<string>(line.Split(','));
 					switch (row)
@@ -162,12 +167,15 @@ namespace common_tool
 
 			int tableClassIndex = title.IndexOf("_");
 			string tableClass = string.Empty;
+			string titleTemplate = string.Empty;
 			if (tableClassIndex != -1)
 			{
 				tableClass = title.Substring(0, tableClassIndex);
+				titleTemplate = $"DataRow_{title.Substring(tableClassIndex + 1)}";
 			}
-			#endregion
-			string titleTemplate = $"DataTable_{title}";
+			else
+				#endregion
+				titleTemplate = $"DataRow_{title}";
 
 			//2. 읽은 자료에 맞는 Table Cs파일을 만든다.
 			using (var streamWriter = new StreamWriter($"{outputPath}/{titleTemplate}.cs"))
@@ -185,7 +193,7 @@ namespace common_tool
 				{
 					cg._namespace("UBF", "Table", tableClass);
 				}
-				cg._class(AccessModifier.Public, ClassType.None, titleTemplate, "IDataTable");
+				cg._class(AccessModifier.Public, ClassType.None, titleTemplate, $"IDataRow");
 
 				for (int i = 0; i < fieldTypes.Count; i++)
 				{
@@ -213,6 +221,7 @@ namespace common_tool
 							Implement = $"{fields[i]} = data[\"{fields[i]}\"].Replace(\"{{$}}\", \",\");";
 							break;
 
+						//배열처리
 						case "bool[]":
 						case "byte[]":
 						case "short[]":
@@ -220,14 +229,14 @@ namespace common_tool
 						case "long[]":
 						case "float[]":
 						case "double[]":
-							Implement = $"{fields[i]} = (data[\"{fields[i]}\"] == \"-1\") ? null : Array.ConvertAll(data[\"{fields[i]}\"].Split('|'), s => {fieldTypes[i]}.Parse(s));";
+							Implement = $"{fields[i]} = (data[\"{fields[i]}\"] == \"-1\") ? null : Array.ConvertAll(data[\"{fields[i]}\"].Split('|'), s => {fieldTypes[i].Replace("[]", "")}.Parse(s));";
 							break;
 						case "string[]":
-							Implement = $"{fields[i]} = (data[\"{fields[i]}\"] == \"-1\") ? null : data[\"{fields[i]}\"].Split('|');";
+							Implement = $"{fields[i]} = (data[\"{fields[i]}\"] == \"-1\") ? null : data[\"{fields[i]}\"].Replace(\"{{$}}\", \",\").Split('|');";
 							break;
 
 						case "DateTime":
-							Implement = "try{" + $"{fields[i]} = DateTime.Parse(data[\"{fields[i]}\"]);" + "} catch {" + $"{fields[i]} = default;" + "}";
+							Implement = $"{fields[i]} = (data[\"{fields[i]}\"] == \"-1\") ? default(DateTime) : DateTime.Parse(data[\"{fields[i]}\"]);";
 							break;
 						default://enumrator
 							Implement = $"{fields[i]} = ({fieldTypes[i]})Enum.Parse(typeof({fieldTypes[i]}), data[\"{fields[i]}\"]);";
@@ -235,11 +244,11 @@ namespace common_tool
 					}
 					methodImplements[i] = $"if (data.ContainsKey(\"{fields[i]}\") == true) {Implement}";
 				}
-
 				cg._method(AccessModifier.Public, "void", "Serialize", "Dictionary<string, string> data", methodImplements);
+
 				cg.EndWritingCode();
 				streamWriter.Write(cg.Code);
-				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}/{ titleTemplate}.cs 작업완료");
+				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}{titleTemplate}.cs 작업완료");
 			}
 		}
 		private static void GenerateEnumTable_CSV(FileInfo fileInfo, string outputPath)
@@ -261,16 +270,21 @@ namespace common_tool
 				{
 					var line = reader.ReadLine();
 
-					//""제거구문
+					//"를 표현하기 위함
+					line = line.Replace("\"\"", "{&}");
+					//,를 표현하기 위함
 					int replaceIndex = line.IndexOf("\"");
+					//줄에 "가 없을때까지(csv는 요소에 ,가 추가되면 요소를 ""로 감쌈)
 					while (replaceIndex != -1)
 					{
-						var originText = line.Substring(replaceIndex, line.IndexOf("\"", replaceIndex + 1) - replaceIndex + ("\"").Length);
-						var replaceText = originText.Replace(",", "{$}");
-						replaceText = replaceText.Replace("\"", "");
-						line = line.Replace(originText, replaceText);
+						var originText = line.Substring(replaceIndex, line.IndexOf("\"", replaceIndex + 1) - replaceIndex + 1);
+						var replaceText = originText.Replace(",", "{$}");//요소로 검색되지않게 처리
+						replaceText = replaceText.Replace("\"", "");//" 삭제처리
+						line = line.Replace(originText, replaceText);// 처리후 변경
+																	 //다음 "" 검색
 						replaceIndex = line.IndexOf("\"");
-					};
+					}
+					line = line.Replace("{&}", "\"");
 
 					//데이터처리
 					List<string> cols = new List<string>(line.Split(','));
@@ -337,7 +351,7 @@ namespace common_tool
 								{
 									valuesByEnum.Add($"{enumName}_StringID", new List<string>());
 
-									if (cols[4] != "")//EnumName 분류행에 StringID가 기입된 경우 StringID를 쓰는 Enum
+									if (cols[4] != "")//EnumName 분류열에 StringID가 기입된 경우 StringID를 쓰는 Enum
 									{
 										//stringID가 있는 enum의 classID에 저장
 										enumIDsWithStringID.Add(int.Parse(enumID));
@@ -422,13 +436,15 @@ namespace common_tool
 
 			int tableClassIndex = title.IndexOf("_");
 			string tableClass = string.Empty;
+			string titleTemplate = string.Empty;
 			if (tableClassIndex != -1)
 			{
 				tableClass = title.Substring(0, tableClassIndex);
+				titleTemplate = $"EnumTable_{title.Substring(tableClassIndex + 5)}";
 			}
-			#endregion
-			string titleTemplate = $"EnumTable_{title}";
-
+			else
+				#endregion
+				titleTemplate = $"EnumTable_{title.Substring(4)}";
 			//2. 읽은 자료에 맞는 Table Cs파일을 만든다.
 			using (var streamWriter = new StreamWriter($"{outputPath}/{titleTemplate}.cs"))
 			{
@@ -469,7 +485,7 @@ namespace common_tool
 					if (enumType == "flags")
 					{
 						cg.WriteLineTab("[Flags]");
-						cg.WriteLineTab($"public enum {enumName} : uint");//ushort
+						cg.WriteLineTab($"public enum {enumName} : uint");//uint64 ushort32
 					}
 					else
 					{
@@ -483,19 +499,17 @@ namespace common_tool
 					{
 						cg.WriteLineTab($"{valuesByEnum[enumName][n]} = {valuesByEnum[$"{enumName}_Type"][n]}, // {valuesByEnum[$"{enumName}_MemberComment"][n]}");
 					}
-					cg.WriteCloseBracket();
+					cg.WriteClosedBracket();
 				}
 
 
 				cg.EndWritingCode();
 				streamWriter.Write(cg.Code);
-				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}/{ titleTemplate}.cs 작업완료");
+				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}{titleTemplate}.cs 작업완료");
 			}
-
-
-
-
-			using (var streamWriter2 = new StreamWriter($"{outputPath}/{titleTemplate}StringID.cs"))
+			titleTemplate = $"StringID_{tableClass}";
+			//3. 읽은 자료에 맞는 StringID Cs파일을 만든다.
+			using (var streamWriter2 = new StreamWriter($"{outputPath}/{titleTemplate}.cs"))
 			{
 				CodeGenerator cg = new CodeGenerator();
 				cg.StartWritingCode();
@@ -549,8 +563,6 @@ namespace common_tool
 					methodImplements.Add("");
 					methodImplements.Add("");
 				}
-
-
 				string[] methodImplement = methodImplements.ToArray();
 				cg._method(AccessModifier.None, "static", "StringID", "", methodImplement);
 
@@ -566,9 +578,10 @@ namespace common_tool
 
 				cg.EndWritingCode();
 				streamWriter2.Write(cg.Code);
-				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}/{ titleTemplate}_StringID.cs 작업완료");
+				Console.WriteLine($"{fileInfo.FullName} 파일에 대한 {outputPath}{titleTemplate}_StringID.cs 작업완료");
 			}
 		}
+
 
 	}
 }

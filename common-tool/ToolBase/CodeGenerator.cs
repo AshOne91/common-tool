@@ -76,7 +76,7 @@
 			_tabTemplate += 1;
 			_front.Add(_codeGenerator.ToString());
 		}
-		public void WriteCloseBracket()
+		public void WriteClosedBracket()
 		{
 			_codeGenerator.Clear();
 			_tabTemplate -= 1;
