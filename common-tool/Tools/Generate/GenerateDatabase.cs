@@ -455,12 +455,12 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t\t/// <sumary>");
                     streamWriter.WriteLine("\t\t/// 생성시간");
                     streamWriter.WriteLine("\t\t/// <sumary>");
-                    streamWriter.WriteLine("\t\t///public DateTime createTime;");
+                    streamWriter.WriteLine("\t\t///public DateTime _create_time;");
 
                     streamWriter.WriteLine("\t\t/// <sumary>");
                     streamWriter.WriteLine("\t\t/// 업데이트 시간");
                     streamWriter.WriteLine("\t\t/// <sumary>");
-                    streamWriter.WriteLine("\t\t///public DateTime updateTime;");
+                    streamWriter.WriteLine("\t\t///public DateTime _update_time;");
 
 
                     foreach (var member in database.members)
@@ -486,22 +486,29 @@ namespace common_tool.Tools.Generate
                     {
                         streamWriter.WriteLine("\t\t\tnSlot = default(short);");
                     }*/
-                    streamWriter.WriteLine("\t\t\tcreateTime = DateTime.UtcNow");
-                    streamWriter.WriteLine("\t\t\tcreateTime = DateTime.UtcNow");
+                    streamWriter.WriteLine("\t\t\t_create_time = DateTime.UtcNow");
+                    streamWriter.WriteLine("\t\t\t_update_time = DateTime.UtcNow");
                     foreach (var member in database.members)
                     {
-                        streamWriter.WriteLine("\t\t\t{0} = default({1});", member.name, member.type);
+                        if (member.type == "string")
+                        {
+                            streamWriter.WriteLine("\t\t\t{0} = string.Empty;", member.name, member.type);
+                        }
+                        else
+                        {
+                            streamWriter.WriteLine("\t\t\t{0} = default({1});", member.name, member.type);
+                        }
                     }
                     streamWriter.WriteLine("\t\t}");
                     if (database.tableType.ToLower() == "slot")
                     {
-                        streamWriter.WriteLine("\tpublic class DBSlot_{0} : DBSlot<{1}>{}", database.tableName, database.tableName);
-                        streamWriter.WriteLine("\tpublic class DBSlotContainer_{0} : DBSlotContainer<DBSlot_{1}>{}", database.tableName, database.tableName);
+                        streamWriter.WriteLine("\tpublic class DBSlot_{0} : DBSlot<{1}>{{}}", database.tableName, database.tableName);
+                        streamWriter.WriteLine("\tpublic class DBSlotContainer_{0} : DBSlotContainer<DBSlot_{1}>{{}}", database.tableName, database.tableName);
                     }
                     else
                     {
-                        streamWriter.WriteLine("\tpublic class DBBase_{0} : DBBase<{1}>{}", database.tableName, database.tableName);
-                        streamWriter.WriteLine("\tpublic class DBBaseContainer_{0} : DBBaseContainer<DBBase_{1}>()", database.tableName, database.tableName);
+                        streamWriter.WriteLine("\tpublic class DBBase_{0} : DBBase<{1}>{{}}", database.tableName, database.tableName);
+                        streamWriter.WriteLine("\tpublic class DBBaseContainer_{0} : DBBaseContainer<DBBase_{1}>{{}}", database.tableName, database.tableName);
                     }
                 }
                 streamWriter.WriteLine("}");
