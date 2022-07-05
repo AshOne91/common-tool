@@ -105,7 +105,7 @@ namespace common_tool.Tools.Generate
                     }
                 }
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpartial void {0}Copy(UserDB userSrc, bool isChanged)");
+                streamWriter.WriteLine("\t\tpartial void {0}Copy(UserDB userSrc, bool isChanged)", _config.templateType);
                 streamWriter.WriteLine("\t\t{");
                 foreach (var database in _config.databases)
                 {
@@ -172,11 +172,11 @@ namespace common_tool.Tools.Generate
                         streamWriter.WriteLine("\t\t\t\tQueryBuilder query = new QueryBuilder(\"gp_player_{0}_load\");", database.tableName.ToLower());
                         if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                         {
-                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_1, database.partitionKey_1);
+                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p{0}\", {1});", database.partitionKey_1, database.partitionKey_1);
                         }
                         if (string.IsNullOrEmpty(database.partitionKey_2) == false)
                         {
-                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_2, database.partitionKey_2);
+                            streamWriter.WriteLine("\t\t\t\tquery.SetInputParam(\"p{0}\", {1});", database.partitionKey_2, database.partitionKey_2);
                         }
                         streamWriter.WriteLine();
                         streamWriter.WriteLine("\t\t\t\tadoDB.Execute(query);");
@@ -185,7 +185,7 @@ namespace common_tool.Tools.Generate
                         streamWriter.WriteLine("\t\t\t\t{");
                         streamWriter.WriteLine("\t\t\t\t\tshort nSlot = adoDB.RecordGetValue(\"slot\");");
                         streamWriter.WriteLine();
-                        streamWriter.WriteLine("\t\t\t\t\tDBSlot_{0} slot = container.Insert(nSlot, false);");
+                        streamWriter.WriteLine("\t\t\t\t\tDBSlot_{0} slot = container.Insert(nSlot, false);", database.tableName);
                         streamWriter.WriteLine();
                         streamWriter.WriteLine("\t\t\t\t\tslot._isDeleted = adoDB.RecordGetValue(\"deleted\");");
                         if (string.IsNullOrEmpty(database.partitionKey_1) == false)
