@@ -196,13 +196,26 @@ namespace common_tool.Tools.Generate
                         {
                             streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetValue(\"{1}\");", database.partitionKey_2, database.partitionKey_2);
                         }
-                        streamWriter.WriteLine("\t\t\t\t\tslot._DBData.createTime = adoDB.RecordGetValue(\"createTime\");");
-                        streamWriter.WriteLine("\t\t\t\t\tslot._DBData.updateTime = adoDB.RecordGetValue(\"updateTime\");");
+                        streamWriter.WriteLine("\t\t\t\t\tslot._DBData.create_time = adoDB.RecordGetTimeValue(\"create_time\");");
+                        streamWriter.WriteLine("\t\t\t\t\tslot._DBData.update_time = adoDB.RecordGetTimeValue(\"update_time\");");
                         streamWriter.WriteLine();
                         foreach (var member in database.members)
                         {
-                            streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetValue(\"{1}\");", member.name, member.name);
+                            if (member.type == "string")
+                            {
+                                streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetStrValue(\"{1}\");", member.name, member.name);
+                            }
+                            else if (member.type == "DateTime")
+                            {
+                                streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetTimeValue(\"{1}\");", member.name, member.name);
+                            }
+                            else
+                            {
+                                streamWriter.WriteLine("\t\t\t\t\tslot._DBData.{0} = adoDB.RecordGetValue(\"{1}\");", member.name, member.name);
+                            }
                         }
+                        streamWriter.WriteLine("\t\t\t\t}");
+                        streamWriter.WriteLine("\t\t\t\tadoDB.RecordEnd()");
                     }
                     else
                     {
@@ -246,6 +259,10 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t\t\t}");
                     streamWriter.WriteLine("\t\t\tcatch (Exception e)");
                     streamWriter.WriteLine("\t\t\t{");
+                    if (database.tableType.ToLower() == "slot")
+                    {
+                        streamWriter.WriteLine("\t\t\t\tadoDB.RecordEnd()", database.tableName.ToLower());
+                    }
                     streamWriter.WriteLine("\t\t\t\tthrow new Exception(\"[gp_player_{0}_load]\" + e.Message);", database.tableName.ToLower());
                     streamWriter.WriteLine("\t\t\t}");
                     streamWriter.WriteLine("\t\t}");
@@ -262,6 +279,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine("using Service.DB;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
@@ -302,19 +320,19 @@ namespace common_tool.Tools.Generate
                         streamWriter.WriteLine("\t\t\t\t\tQueryBuilder query = new QueryBuilder(\"gp_player_{0}_save\");", database.tableName.ToLower());
                         if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                         {
-                            streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_1, database.partitionKey_1);
+                            streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"@p_{0}\", {1});", database.partitionKey_1, database.partitionKey_1);
                         }
                         if (string.IsNullOrEmpty(database.partitionKey_2) == false)
                         {
-                            streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"p_{0}\", {1});", database.partitionKey_2, database.partitionKey_2);
+                            streamWriter.WriteLine("\t\t\t\t\tquery.SetInputParam(\"@p_{0}\", {1});", database.partitionKey_2, database.partitionKey_2);
                         }
                         streamWriter.WriteLine();
-                        streamWriter.WriteLine("\t\t\t\t\tif (slot._isDeleted)");
+                        streamWriter.WriteLine("\t\t\t\t\tif (!slot._isDeleted)");
                         streamWriter.WriteLine("\t\t\t\t\t{");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_slot\", slot._nSlot);");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_deleted\", 0);");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_createTime\", slot._DBData.createTime);");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_updateTime\", DateTime.UtcNow);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_slot\", slot._nSlot);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_deleted\", 0);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_create_time\", slot._DBData.create_time);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_update_time\", DateTime.UtcNow);");
                         streamWriter.WriteLine();
                         foreach(var member in database.members)
                         {
@@ -323,14 +341,14 @@ namespace common_tool.Tools.Generate
                         streamWriter.WriteLine("\t\t\t\t\t}");
                         streamWriter.WriteLine("\t\t\t\t\telse");
                         streamWriter.WriteLine("\t\t\t\t\t{");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_slot\", slot._nSlot);");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_deleted\", 1);");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_createTime\", DateTime.UtcNow);");
-                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_updateTime\", DateTime.UtcNow);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_slot\", slot._nSlot);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_deleted\", 1);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_createTime\", DateTime.UtcNow);");
+                        streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_updateTime\", DateTime.UtcNow);");
                         streamWriter.WriteLine();
                         foreach (var member in database.members)
                         {
-                            streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"p_{0}\", default({1}));", member.name, member.type);
+                            streamWriter.WriteLine("\t\t\t\t\t\tquery.SetInputParam(\"@p_{0}\", default({1}));", member.name, member.type);
                         }
                         streamWriter.WriteLine("\t\t\t\t\t}");
                         streamWriter.WriteLine("\t\t\t\t\tadoDB.ExecuteNoRecords(query);");
