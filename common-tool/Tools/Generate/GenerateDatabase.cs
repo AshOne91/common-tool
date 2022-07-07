@@ -88,6 +88,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine("using Service.DB;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase;");
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
                 streamWriter.WriteLine("{");
@@ -164,7 +165,7 @@ namespace common_tool.Tools.Generate
                         }
                     }
 
-                    string funcStr = string.Format("\t\tprivate void _Run_LoadUser_{0}(Ado adoDB, ", database.tableName);
+                    string funcStr = string.Format("\t\tprivate void _Run_LoadUser_{0}(AdoDB adoDB, ", database.tableName);
                     if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                     {
                         funcStr += "UInt64 ";
@@ -229,7 +230,7 @@ namespace common_tool.Tools.Generate
                             }
                         }
                         streamWriter.WriteLine("\t\t\t\t}");
-                        streamWriter.WriteLine("\t\t\t\tadoDB.RecordEnd()");
+                        streamWriter.WriteLine("\t\t\t\tadoDB.RecordEnd();");
                     }
                     else
                     {
@@ -279,6 +280,8 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t\t\t}");
                     streamWriter.WriteLine("\t\t}");
                 }
+                streamWriter.WriteLine("\t}");
+                streamWriter.WriteLine("}");
             }
         }
         void GenerateDBSave(string targetDir, string templateType, string namespaceValue)
@@ -343,7 +346,7 @@ namespace common_tool.Tools.Generate
                         }
                     }
 
-                    string funcStr = string.Format("\t\tprivate void _Run_SaveUser_{0}(Ado adoDB, ", database.tableName);
+                    string funcStr = string.Format("\t\tprivate void _Run_SaveUser_{0}(AdoDB adoDB, ", database.tableName);
                     if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                     {
                         funcStr += "UInt64 ";
@@ -354,7 +357,6 @@ namespace common_tool.Tools.Generate
                     {
                         funcStr += "UInt64 ";
                         funcStr += database.partitionKey_2;
-                        funcStr += ", ";
                     }
 
                     /*if (database.tableType.ToLower() == "slot")
@@ -457,15 +459,15 @@ namespace common_tool.Tools.Generate
                     }
                     if (string.IsNullOrEmpty(database.partitionKey_2) == false)
                     {
-                        funcStr += "partitionKey_2)";
+                        funcStr += "partitionKey_2);";
                     }
                     streamWriter.WriteLine(funcStr);
 
                 }
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine("\t}");
+                streamWriter.WriteLine("}");
             }
-
         }
         void GenerateDBTable(string targetDir, string namespaceValue)
         {
@@ -477,6 +479,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("using Service.Net;");
                 streamWriter.WriteLine("using Service.Core;");
                 streamWriter.WriteLine("using Service.DB;");
+                streamWriter.WriteLine("using GameBase.Template.GameBase;");
                 streamWriter.WriteLine();
 
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
@@ -517,12 +520,12 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t\t/// <sumary>");
                     streamWriter.WriteLine("\t\t/// 생성시간");
                     streamWriter.WriteLine("\t\t/// <sumary>");
-                    streamWriter.WriteLine("\t\t///public DateTime create_time;");
+                    streamWriter.WriteLine("\t\tpublic DateTime create_time;");
 
                     streamWriter.WriteLine("\t\t/// <sumary>");
                     streamWriter.WriteLine("\t\t/// 업데이트 시간");
                     streamWriter.WriteLine("\t\t/// <sumary>");
-                    streamWriter.WriteLine("\t\t///public DateTime update_time;");
+                    streamWriter.WriteLine("\t\tpublic DateTime update_time;");
 
 
                     foreach (var member in database.members)
@@ -548,8 +551,8 @@ namespace common_tool.Tools.Generate
                     {
                         streamWriter.WriteLine("\t\t\tnSlot = default(short);");
                     }*/
-                    streamWriter.WriteLine("\t\t\tcreate_time = DateTime.UtcNow");
-                    streamWriter.WriteLine("\t\t\tupdate_time = DateTime.UtcNow");
+                    streamWriter.WriteLine("\t\t\tcreate_time = DateTime.UtcNow;");
+                    streamWriter.WriteLine("\t\t\tupdate_time = DateTime.UtcNow;");
                     foreach (var member in database.members)
                     {
                         if (member.type == "string")
@@ -562,6 +565,7 @@ namespace common_tool.Tools.Generate
                         }
                     }
                     streamWriter.WriteLine("\t\t}");
+                    streamWriter.WriteLine("\t}");
                     if (database.tableType.ToLower() == "slot")
                     {
                         streamWriter.WriteLine("\tpublic class DBSlot_{0} : DBSlot<{1}>{{}}", database.tableName, database.tableName);
