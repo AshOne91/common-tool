@@ -256,12 +256,12 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\treturn _obj.{0}Impl as T", words[1]);
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic static {0}Impl Get{1}Impl<T>()", _config.templateName, _config.templateName);
+                streamWriter.WriteLine("\t\tpublic static {0}Impl Get{1}Impl()", _config.templateName, _config.templateName);
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn _Impl;");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic virtual void OnTemplateUpdate(float dt)");
+                streamWriter.WriteLine("\t\tpublic override void OnTemplateUpdate(float dt)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t// TODO : 템플릿 업데이트 사항 작성(유저X)");
                 streamWriter.WriteLine("\t\t}");
