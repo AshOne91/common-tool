@@ -490,7 +490,7 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t{");
                     if (string.IsNullOrEmpty(database.partitionKey_1) || string.IsNullOrEmpty(database.partitionKey_2))
                     {
-                        throw new Exception($"failed create : partitionKey empty. {database.databaseName}");
+                        throw new Exception($"failed create : partitionKey empty. {database.tableName}");
                     }
 
                     if (string.IsNullOrEmpty(database.partitionKey_1) == false)

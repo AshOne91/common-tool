@@ -42,42 +42,62 @@ namespace common_tool.Tools.Generate
                 {
                     throw new Exception($"failed to read file. {file.FullName}");
                 }
-                if (_param._dicActionParam.ContainsKey("--dbID") == false)
+                if (_param._dicActionParam.ContainsKey("--id") == false)
                 {
-                    throw new Exception($"not found parameter - \"--dbID\"");
+                    throw new Exception($"not found parameter - \"--id\"");
                 }
-                if (_param._dicActionParam.ContainsKey("--dbPW") == false)
+                if (_param._dicActionParam.ContainsKey("--pw") == false)
                 {
-                    throw new Exception($"not found parameter - \"--dbPW\"");
+                    throw new Exception($"not found parameter - \"--pw\"");
                 }
-                if (_param._dicActionParam.ContainsKey("--dbIP") == false)
+                if (_param._dicActionParam.ContainsKey("--ip") == false)
                 {
-                    throw new Exception($"not found parameter - \"--dbIP\"");
+                    throw new Exception($"not found parameter - \"--ip\"");
                 }
-                if (_param._dicActionParam.ContainsKey("--dbPort") == false)
+                if (_param._dicActionParam.ContainsKey("--port") == false)
                 {
-                    throw new Exception($"not found parameter - \"--dbPort\"");
+                    throw new Exception($"not found parameter - \"--port\"");
                 }
-                string str = "DELIMITER $$\r\n\r\n";
+                if (_param._dicActionParam.ContainsKey("--name") == false)
+                {
+                    throw new Exception($"not found parameter - \"--name\"");
+                }
+
+                //string str = "DELIMITER $$\r\n\r\n";
                 foreach (var database in _config.databases)
                 {
-                    Process(database, _param._dicActionParam["--dbID"], _param._dicActionParam["--dbPW"], _param._dicActionParam["--dbIP"], _param._dicActionParam["--dbPort"]);
+                    Process(database, _param._dicActionParam["--id"], _param._dicActionParam["--pw"], _param._dicActionParam["--ip"], _param._dicActionParam["--port"], _param._dicActionParam["--name"], targetDir.FullName);
                 }
-                str += "\r\nDELIMITER ;";
+                //str += "\r\nDELIMITER ;";
             }
         }
 
-        async static void Process(InfraDatabase database, string dbID, string dbPW, string dbIP, string dbPort)
+        async void Process(InfraDatabase database, string id, string pw, string ip, string port, string name, string targetDir)
         {
             bool IsSuccess = true;
             try
             {
-                var connection = DBFactory.GetConnection("mysql", dbIP, database.databaseName, dbID, dbPW, dbPort);
-                await connection.OpenAsync();
+                string filePath = Path.Combine(targetDir, _config.templateName + "DB.sql");
+
+                using (var streamWriter = new StreamWriter(filePath))
+                {
+                    string sql = string.Empty;
+                    sql += "DELIMITER $$\r\n\r\n";
+                    sql += DeleteTable(name, database);
+                    sql += CreateTable(name, database);
+                    sql += DeleteLoadProc(name, database);
+                    sql += CreateLoadProc(name, database);
+                    sql += DeleteSaveProc(name, database);
+                    sql += CreateSaveProc(name, database);
+                    sql += "\r\nDELIMITER ;";
+                    streamWriter.Write(sql);
+                }
+                    //var connection = DBFactory.GetConnection("mysql", ip, name, id, pw, port);
+                    //await connection.OpenAsync();
 
 
 
-                connection.Close();
+                    //connection.Close();
             }
             catch (Exception e)
             {
@@ -99,14 +119,14 @@ namespace common_tool.Tools.Generate
             //!!FIXME
             return string.Empty;
         }
-        static string DeleteTable(InfraDatabase database)
+        static string DeleteTable(string databaseName, InfraDatabase database)
         {
-            string str = "DROP TABLE if exists " + database.databaseName + "." + database.tableName + ";";
+            string str = "DROP TABLE if exists " + databaseName + "." + database.tableName + ";";
             return str;
         }
-        static string CreateTable(InfraDatabase database)
+        static string CreateTable(string databaseName, InfraDatabase database)
         {
-            string str = "CREATE TABLE table_auto_" + database.tableName + " (\t\n";
+            string str = "CREATE TABLE " + databaseName + ".table_auto_" + database.tableName.ToLower() + " (\t\n";
             str += "\tidx BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,\r\n";
             if (string.IsNullOrEmpty(database.partitionKey_1) == false)
             {
@@ -118,16 +138,16 @@ namespace common_tool.Tools.Generate
             }
             if (database.tableType == "slot")
             {
-                str += "\tslot SMALLINT NOT NULL DEFAULT 0,";
-                str += "\tdeleted BIT NOT NULL DEFAULT b'0',";
+                str += "\tslot SMALLINT NOT NULL DEFAULT 0 COMMENT '슬롯 번호',";
+                str += "\tdeleted BIT NOT NULL DEFAULT b'0' COMMENT '삭제 여부',";
             }
-            str += "\tcreateTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,";
-            str += "\tupdateTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,";
+            str += "\tcreate_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성시간',\r\n";
+            str += "\tupdate_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '수정시간',\r\n";
             int count = 0;
             foreach (var member in database.members)
             {
                 count++;
-                str += "\t" + member.name + GetTableType(member.type) + ",\r\n";
+                str += "\t" + member.name + GetTableType(member.type) +" COMMENT " +"'"+ member.comment + "'" +",\r\n";
             }
             str += "\tPRIMARY KEY(idx)\r\n";
             str += ")\r\n";
@@ -136,10 +156,10 @@ namespace common_tool.Tools.Generate
             str += "COLLATE utf8mb4_general_ci;\r\n";
             return str;
         }
-        static string AddUniqueIndex(InfraDatabase database)
+        static string AddUniqueIndex(string databaseName, InfraDatabase database)
         {
-            string str = "ALTER TABLE table_auto_" + database.tableName.Trim() + "\r\n";
-            str += "ADD UNIQUE INDEX ix_" + database.tableName.Trim() + (string.IsNullOrEmpty(database.partitionKey_1) == false ? "_" + database.partitionKey_1 : "")
+            string str = "ALTER TABLE table_auto_" + database.tableName.ToLower() + "\r\n";
+            str += "ADD UNIQUE INDEX ix_" + database.tableName.ToLower() + (string.IsNullOrEmpty(database.partitionKey_1) == false ? "_" + database.partitionKey_1 : "")
                 + (string.IsNullOrEmpty(database.partitionKey_2) == false ? "_" + database.partitionKey_2 : "") + (database.tableType == "slot" ? "_slot" : "") + " (";
 
             if (string.IsNullOrEmpty(database.partitionKey_1) == false)
@@ -211,15 +231,15 @@ namespace common_tool.Tools.Generate
         }
 
 
-        static string DeleteLoadProc(InfraDatabase database)
+        static string DeleteLoadProc(string databaseName, InfraDatabase database)
         {
-            string str = "DROP PROCEDURE if exists " + database.databaseName + ".gp_player_" + database.tableName.ToLower() + "_load;";
+            string str = "DROP PROCEDURE if exists " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_load;";
             return str;
         }
-        static string CreateLoadProc(InfraDatabase database)
+        static string CreateLoadProc(string databaseName, InfraDatabase database)
         {
             string str = "";
-            str += "CREATE PROCEDURE " + database.databaseName + ".gp_player_" + database.tableName.ToLower() + "_load(\r\n";
+            str += "CREATE PROCEDURE " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_load(\r\n";
             if (string.IsNullOrEmpty(database.partitionKey_1) == false)
             {
                 str += "    IN p_" + database.partitionKey_1 + " BIGINT UNSIGNED";
@@ -250,7 +270,7 @@ namespace common_tool.Tools.Generate
             {
                 if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                 {
-                    str += "\", \"p_" + database.partitionKey_2 ;
+                    str += ",\", \"p_" + database.partitionKey_2 ;
                 }
                 else
                 {
@@ -258,7 +278,7 @@ namespace common_tool.Tools.Generate
                 }
             }
             str += ");\r\n";
-            str += "		INSERT INTO table_errorlog(ProcedureName, ErrorState, ErrorNo, ErrorMessage, Param) VALUES('gp_player_" + database.tableName.ToLower() + "_load', @p_ErrorState, @p_ErrorNo, @p_ErrorMessage, ProcParam);\r\n";
+            str += "		INSERT INTO table_errorlog(procedure_name, error_state, error_no, error_message, param) VALUES('gp_player_" + database.tableName.ToLower() + "_load', @p_ErrorState, @p_ErrorNo, @p_ErrorMessage, ProcParam);\r\n";
             str += "		RESIGNAL;\r\n";
             str += "	END;\r\n";
             str += "\r\n";
@@ -301,25 +321,26 @@ namespace common_tool.Tools.Generate
 
             if (!(database.tableType == "slot"))
             {
-                str += "	IF NOT EXISTS(SELECT " + selectColum + " FROM table_auto_" + database.tableName.ToLower() + condition + ") THEN\r\n";
+                str += "    IF NOT EXISTS(SELECT " + selectColum + " FROM table_auto_" + database.tableName.ToLower() + condition + ") THEN\r\n";
                 str += "        INSERT INTO table_auto_" + database.tableName.ToLower() + "(" + selectColum + ")" + "VALUES(" + param + ");\r\n";
                 str += "    END IF;\r\n";
                 str += "\r\n";
             }
+
             str += "    SELECT * FROM table_auto_" + database.tableName.ToLower() + condition + ((database.tableType == "slot") ? " AND deleted = 0" : "") + ";\r\n";
             str += "\r\n";
             str += "END\r\n";
             return str;
         }
-        static string DeleteSaveProc(InfraDatabase database)
+        static string DeleteSaveProc(string databaseName, InfraDatabase database)
         {
-            string str = @"DROP PROCEDURE if exists " + database.databaseName + ".gp_player_" + database.tableName.ToLower() + "_save;";
+            string str = @"DROP PROCEDURE if exists " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_save;";
             return str;
         }
-        static string CreateSaveProc(InfraDatabase database)
+        static string CreateSaveProc(string databaseName, InfraDatabase database)
         {
             string str = string.Empty;
-            str += "CREATE PROCEDURE " + database.databaseName + ".gp_player_" + database.tableName + "_save(\r\n";
+            str += "CREATE PROCEDURE " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_save(\r\n";
             str += "" + GetStringInputParam(database) + "\r\n)\r\n";
             str += "BEGIN\r\n";
             str += "\r\n";
@@ -331,7 +352,7 @@ namespace common_tool.Tools.Generate
             str += "			GET DIAGNOSTICS CONDITION @cno\r\n";
             str += "			@p_ErrorState = RETURNED_SQLSTATE, @p_ErrorNo = MYSQL_ERRNO, @p_ErrorMessage = MESSAGE_TEXT;\r\n";
             str += "		SET ProcParam = CONCAT(" + GetStringLogParam(database) + ");\r\n";
-            str += "		INSERT INTO table_errorlog(ProcedureName, ErrorState, ErrorNo, ErrorMessage, Param)\r\n";
+            str += "		INSERT INTO table_errorlog(procedure_name, error_state, error_no, error_message, param)\r\n";
             str += "			VALUES('gp_player_" + database.tableName.ToLower() + "_save', @p_ErrorState, @p_ErrorNo, @p_ErrorMessage, ProcParam);\r\n";
             str += "		RESIGNAL;\r\n";
             str += "	END;\r\n";
@@ -361,7 +382,7 @@ namespace common_tool.Tools.Generate
                 }
                 str += "\t\tslot,\r\n";
                 str += "\t\tdeleted,\r\n";
-                str += "\t\tupdateTime,\r\n";
+                str += "\t\tupdate_time,\r\n";
                 int count = 0;
                 foreach (var member in database.members)
                 {
@@ -370,6 +391,18 @@ namespace common_tool.Tools.Generate
                 }
                 str += "\t)\r\n";
                 str += "\tVALUES (\r\n";
+                if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                {
+                    str += "\t\tp_" + database.partitionKey_1;
+                }
+                if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                {
+                    if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                    {
+                        str += ",\r\n";
+                    }
+                    str += "\t\tp_" + database.partitionKey_2 + ",\r\n";
+                }
                 count = 0;
                 foreach (var member in database.members)
                 {
@@ -379,9 +412,9 @@ namespace common_tool.Tools.Generate
                 str += "\t)\r\n";
                 str += "\tON DUPLICATE KEY\r\n";
                 str += "\tUPDATE\r\n";
-                str += "\t\tcreateTime = CASE WHEN deleted = 1 AND p_deleted = 0 THEN CURRENT_TIMESTAMP() ELSE createTime END,\r\n";
+                str += "\t\tcreate_time = CASE WHEN deleted = 1 AND p_deleted = 0 THEN CURRENT_TIMESTAMP() ELSE create_time END,\r\n";
                 str += "\t\tdeleted = p_deleted,\r\n";
-                str += "\t\tupdateTime = p_updateTime,\r\n";
+                str += "\t\tupdate_time = p_update_time,\r\n";
                 count = 0;
                 foreach (var member in database.members)
                 {
@@ -428,6 +461,22 @@ namespace common_tool.Tools.Generate
         {
             string str = string.Empty;
             int count = 0;
+            if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+            {
+                str += "p_" + database.partitionKey_1 +",','";
+            }
+            if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+            {
+                if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                {
+                    str += ",";
+                }
+                str += "p_" + database.partitionKey_2 + ",',',";
+            }
+            if (database.tableType == "slot")
+            {
+                str += "p_slot, ',', p_deleted, ',', p_create_time, ',', p_update_time, ',', ";
+            }
             foreach (var member in database.members)
             {
                 count++;
