@@ -72,7 +72,7 @@ namespace common_tool.Tools.Generate
             }
         }
 
-        async void Process(InfraDatabase database, string id, string pw, string ip, string port, string name, string targetDir)
+        void Process(InfraDatabase database, string id, string pw, string ip, string port, string name, string targetDir)
         {
             bool IsSuccess = true;
             try

@@ -26,7 +26,7 @@ namespace common_tool
 				    {"gen:table", new GenerateTable(param) },
 				    {"gen:template", new GenerateTemplate(param)},
                     {"gen:database", new GenerateDatabase(param)},
-                    {"gen:sql", new GenerateDatabase(param)},
+                    {"gen:sql", new GenerateSql(param)},
                     {"gen:application", new GenerateApplication(param)}
                 };
 
