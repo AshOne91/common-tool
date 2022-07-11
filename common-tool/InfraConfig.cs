@@ -46,6 +46,7 @@ namespace common_tool
 
     public class InfraDatabase
     {
+        public string databaseType = string.Empty; //game, global, log
         public string tableType = string.Empty; //slot(슬롯형식), base(싱글형식)
         public string tableName = string.Empty; //table명
         public string partitionKey_1 = string.Empty;

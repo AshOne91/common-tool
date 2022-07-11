@@ -1,4 +1,5 @@
 ﻿using common_tool.ToolBase;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -62,42 +63,55 @@ namespace common_tool.Tools.Generate
                 {
                     throw new Exception($"not found parameter - \"--name\"");
                 }
+                if (_param._dicActionParam.ContainsKey("--type") == false)
+                {
+                    throw new Exception($"not found parameter - \"--type\"");
+                }
 
                 //string str = "DELIMITER $$\r\n\r\n";
                 foreach (var database in _config.databases)
                 {
-                    Process(database, _param._dicActionParam["--id"], _param._dicActionParam["--pw"], _param._dicActionParam["--ip"], _param._dicActionParam["--port"], _param._dicActionParam["--name"], targetDir.FullName);
+                    if (database.databaseType.ToLower().Trim() != _param._dicActionParam["--type"].ToLower().Trim())
+                    {
+                        continue;
+                    }
+                    Process(database, _param._dicActionParam["--id"], _param._dicActionParam["--pw"], _param._dicActionParam["--ip"], _param._dicActionParam["--port"], _param._dicActionParam["--name"], _param._dicActionParam["--type"], targetDir.FullName);
                 }
                 //str += "\r\nDELIMITER ;";
             }
         }
 
-        void Process(InfraDatabase database, string id, string pw, string ip, string port, string name, string targetDir)
+        void Process(InfraDatabase database, string id, string pw, string ip, string port, string name, string type, string targetDir)
         {
             bool IsSuccess = true;
             try
             {
-                string filePath = Path.Combine(targetDir, _config.templateName + "DB.sql");
+                string filePath = Path.Combine(targetDir, _config.templateName + "_" + name + "_" + type + "DB.sql");
 
+                string sql = string.Empty;
                 using (var streamWriter = new StreamWriter(filePath))
                 {
-                    string sql = string.Empty;
+                    sql += "USE " + name + ";\r\n";
+                    sql += DeleteTable(database);
+                    sql += CreateTable(database);
+                    sql += AddUniqueIndex(database);
+                    sql += DeleteLoadProc(database);
                     sql += "DELIMITER $$\r\n\r\n";
-                    sql += DeleteTable(name, database);
-                    sql += CreateTable(name, database);
-                    sql += DeleteLoadProc(name, database);
-                    sql += CreateLoadProc(name, database);
-                    sql += DeleteSaveProc(name, database);
-                    sql += CreateSaveProc(name, database);
+                    sql += CreateLoadProc(database);
                     sql += "\r\nDELIMITER ;";
+                    sql += DeleteSaveProc(database);
+                    sql += "DELIMITER $$\r\n\r\n";
+                    sql += CreateSaveProc(database);
+                    sql += "\r\nDELIMITER ;";
+
                     streamWriter.Write(sql);
                 }
-                    //var connection = DBFactory.GetConnection("mysql", ip, name, id, pw, port);
-                    //await connection.OpenAsync();
+                var connection = DBFactory.GetConnection("mysql", ip, name, id, pw, port);
+                connection.Open();
 
-
-
-                    //connection.Close();
+                MySqlScript script = new MySqlScript((MySqlConnection)connection, sql);
+                script.Execute();
+                connection.Close();
             }
             catch (Exception e)
             {
@@ -119,14 +133,14 @@ namespace common_tool.Tools.Generate
             //!!FIXME
             return string.Empty;
         }
-        static string DeleteTable(string databaseName, InfraDatabase database)
+        static string DeleteTable(InfraDatabase database)
         {
-            string str = "DROP TABLE if exists " + databaseName + "." + database.tableName + ";";
+            string str = "DROP TABLE if exists " + database.tableName.ToLower() + ";\r\n";
             return str;
         }
-        static string CreateTable(string databaseName, InfraDatabase database)
+        static string CreateTable(InfraDatabase database)
         {
-            string str = "CREATE TABLE " + databaseName + ".table_auto_" + database.tableName.ToLower() + " (\t\n";
+            string str = "CREATE TABLE " + "table_auto_" + database.tableName.ToLower() + " (\t\n";
             str += "\tidx BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,\r\n";
             if (string.IsNullOrEmpty(database.partitionKey_1) == false)
             {
@@ -138,8 +152,8 @@ namespace common_tool.Tools.Generate
             }
             if (database.tableType == "slot")
             {
-                str += "\tslot SMALLINT NOT NULL DEFAULT 0 COMMENT '슬롯 번호',";
-                str += "\tdeleted BIT NOT NULL DEFAULT b'0' COMMENT '삭제 여부',";
+                str += "\tslot SMALLINT NOT NULL DEFAULT 0 COMMENT '슬롯 번호',\r\n";
+                str += "\tdeleted BIT NOT NULL DEFAULT b'0' COMMENT '삭제 여부',\r\n";
             }
             str += "\tcreate_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성시간',\r\n";
             str += "\tupdate_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '수정시간',\r\n";
@@ -147,7 +161,7 @@ namespace common_tool.Tools.Generate
             foreach (var member in database.members)
             {
                 count++;
-                str += "\t" + member.name + GetTableType(member.type) +" COMMENT " +"'"+ member.comment + "'" +",\r\n";
+                str += "\t" + member.name +" "+ GetTableType(member.type) +" COMMENT " +"'"+ member.comment + "'" +",\r\n";
             }
             str += "\tPRIMARY KEY(idx)\r\n";
             str += ")\r\n";
@@ -156,9 +170,9 @@ namespace common_tool.Tools.Generate
             str += "COLLATE utf8mb4_general_ci;\r\n";
             return str;
         }
-        static string AddUniqueIndex(string databaseName, InfraDatabase database)
+        static string AddUniqueIndex(InfraDatabase database)
         {
-            string str = "ALTER TABLE table_auto_" + database.tableName.ToLower() + "\r\n";
+            string str = "ALTER TABLE " + "table_auto_" + database.tableName.ToLower() + "\r\n";
             str += "ADD UNIQUE INDEX ix_" + database.tableName.ToLower() + (string.IsNullOrEmpty(database.partitionKey_1) == false ? "_" + database.partitionKey_1 : "")
                 + (string.IsNullOrEmpty(database.partitionKey_2) == false ? "_" + database.partitionKey_2 : "") + (database.tableType == "slot" ? "_slot" : "") + " (";
 
@@ -178,7 +192,7 @@ namespace common_tool.Tools.Generate
             {
                 str += ",slot";
             }
-            str += ");";
+            str += ");\r\n";
             return str;
         }
         static string GetTableType(string type)
@@ -187,30 +201,39 @@ namespace common_tool.Tools.Generate
             switch (type.Trim())
             {
                 case "bool":
+                case "Boolean":
                     ret = "BIT NOT NULL DEFAULT b'0'";
                     break;
                 case "Byte":
+                case "byte":
                     ret = "TINYINT UNSIGNED NOT NULL DEFAULT 0";
                     break;
                 case "SByte":
+                case "sbyte":
                     ret = "TINYINT NOT NULL DEFAULT 0";
                     break;
                 case "short":
+                case "Int16":
                     ret = "SMALLINT NOT NULL DEFAULT 0";
                     break;
                 case "ushort":
+                case "UInt16":
                     ret = "SMALLINT UNSIGNED NOT NULL DEFAULT 0";
                     break;
                 case "Int32":
+                case "int":
                     ret = "INT NOT NULL DEFAULT 0";
                     break;
                 case "UInt32":
+                case "uint":
                     ret = "INT UNSIGNED NOT NULL DEFAULT 0";
                     break;
                 case "Int64":
+                case "long":
                     ret = "BIGINT NOT NULL DEFAULT 0";
                     break;
                 case "UInt64":
+                case "ulong":
                     ret = "BIGINT UNSIGNED NOT NULL DEFAULT 0";
                     break;
                 case "char":
@@ -218,9 +241,11 @@ namespace common_tool.Tools.Generate
                     ret = "VARCHAR(100) NOT NULL DEFAULT ''";
                     break;
                 case "float":
+                case "Single":
                     ret = "FLOAT NOT NULL DEFAULT 0";
                     break;
                 case "double":
+                case "Double":
                     ret = "DOUBLE NOT NULL DEFAULT 0";
                     break;
                 case "DateTime":
@@ -231,15 +256,15 @@ namespace common_tool.Tools.Generate
         }
 
 
-        static string DeleteLoadProc(string databaseName, InfraDatabase database)
+        static string DeleteLoadProc(InfraDatabase database)
         {
-            string str = "DROP PROCEDURE if exists " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_load;";
+            string str = "DROP PROCEDURE if exists " + "gp_player_" + database.tableName.ToLower() + "_load;\r\n";
             return str;
         }
-        static string CreateLoadProc(string databaseName, InfraDatabase database)
+        static string CreateLoadProc(InfraDatabase database)
         {
             string str = "";
-            str += "CREATE PROCEDURE " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_load(\r\n";
+            str += "CREATE PROCEDURE " + "gp_player_" + database.tableName.ToLower() + "_load(\r\n";
             if (string.IsNullOrEmpty(database.partitionKey_1) == false)
             {
                 str += "    IN p_" + database.partitionKey_1 + " BIGINT UNSIGNED";
@@ -270,7 +295,7 @@ namespace common_tool.Tools.Generate
             {
                 if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                 {
-                    str += ",\", \"p_" + database.partitionKey_2 ;
+                    str += ",', ', p_" + database.partitionKey_2 ;
                 }
                 else
                 {
@@ -330,17 +355,18 @@ namespace common_tool.Tools.Generate
             str += "    SELECT * FROM table_auto_" + database.tableName.ToLower() + condition + ((database.tableType == "slot") ? " AND deleted = 0" : "") + ";\r\n";
             str += "\r\n";
             str += "END\r\n";
+            str += "$$";
             return str;
         }
-        static string DeleteSaveProc(string databaseName, InfraDatabase database)
+        static string DeleteSaveProc(InfraDatabase database)
         {
-            string str = @"DROP PROCEDURE if exists " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_save;";
+            string str = @"DROP PROCEDURE if exists " + "gp_player_" + database.tableName.ToLower() + "_save;\r\n";
             return str;
         }
-        static string CreateSaveProc(string databaseName, InfraDatabase database)
+        static string CreateSaveProc(InfraDatabase database)
         {
             string str = string.Empty;
-            str += "CREATE PROCEDURE " + databaseName + ".gp_player_" + database.tableName.ToLower() + "_save(\r\n";
+            str += "CREATE PROCEDURE " + "gp_player_" + database.tableName.ToLower() + "_save(\r\n";
             str += "" + GetStringInputParam(database) + "\r\n)\r\n";
             str += "BEGIN\r\n";
             str += "\r\n";
@@ -360,6 +386,7 @@ namespace common_tool.Tools.Generate
             str += "	" + GetStringInsertParam(database) + "\r\n";
             str += "\r\n";
             str += "END\r\n";
+            str += "$$";
             return str;
         }
         static string GetStringInsertParam(InfraDatabase database)
@@ -403,6 +430,9 @@ namespace common_tool.Tools.Generate
                     }
                     str += "\t\tp_" + database.partitionKey_2 + ",\r\n";
                 }
+                str += "\t\tp_slot,\r\n";
+                str += "\t\tp_deleted,\r\n";
+                str += "\t\tp_update_time,\r\n";
                 count = 0;
                 foreach (var member in database.members)
                 {
@@ -507,9 +537,9 @@ namespace common_tool.Tools.Generate
                 str += "    IN p_deleted BIT";
             }
             str += ",\r\n";
-            str += "    IN p_createTime DATETIME";
+            str += "    IN p_create_time DATETIME";
             str += ",\r\n";
-            str += "    IN p_updateTime DATETIME";
+            str += "    IN p_update_time DATETIME";
             foreach (var member in database.members)
             {
                 str += ",\r\n";
@@ -524,30 +554,39 @@ namespace common_tool.Tools.Generate
             switch (type.Trim())
             {
                 case "bool":
+                case "Boolean":
                     ret = "BIT";
                     break;
                 case "Byte":
+                case "byte":
                     ret = "TINYINT UNSIGNED";
                     break;
                 case "SByte":
+                case "sbyte":
                     ret = "TINYINT";
                     break;
                 case "short":
+                case "Int16":
                     ret = "SMALLINT";
                     break;
                 case "ushort":
+                case "UInt16":
                     ret = "SMALLINT UNSIGNED";
                     break;
                 case "Int32":
+                case "int":
                     ret = "INT";
                     break;
                 case "UInt32":
+                case "uint":
                     ret = "INT UNSIGNED";
                     break;
                 case "Int64":
+                case "long":
                     ret = "BIGINT";
                     break;
                 case "UInt64":
+                case "ulong":
                     ret = "BIGINT UNSIGNED";
                     break;
                 case "char":
@@ -555,9 +594,11 @@ namespace common_tool.Tools.Generate
                     ret = "VARCHAR(100)";
                     break;
                 case "float":
+                case "Single":
                     ret = "FLOAT";
                     break;
                 case "double":
+                case "Double":
                     ret = "DOUBLE";
                     break;
                 case "DateTime":
