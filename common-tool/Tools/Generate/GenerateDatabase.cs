@@ -280,6 +280,22 @@ namespace common_tool.Tools.Generate
                     streamWriter.WriteLine("\t\t\t}");
                     streamWriter.WriteLine("\t\t}");
                 }
+                streamWriter.WriteLine("\t\tpublic override void LoadRun(AdoDB adoDB, UInt64 partitionKey_1, UInt64 partitionKey_2)");
+                streamWriter.WriteLine("\t\t{");
+                foreach (var database in _config.databases)
+                {
+                    string funcStr = string.Format("\t\t\t_Run_LoadUser_{0}(adoDB, ", database.tableName);
+                    if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                    {
+                        funcStr += "partitionKey_1, ";
+                    }
+                    if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                    {
+                        funcStr += "partitionKey_2);";
+                    }
+                    streamWriter.WriteLine(funcStr);
+                }
+                streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine("\t}");
                 streamWriter.WriteLine("}");
             }
