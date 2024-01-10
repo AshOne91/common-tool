@@ -85,7 +85,9 @@ namespace common_tool
 					{
 						streamWriter.WriteLine($"using System;");
 						streamWriter.WriteLine($"using System.Collections.Generic;");
-						streamWriter.WriteLine($"using Service.Core;");
+						streamWriter.WriteLine($"using System.Linq;");
+
+                        streamWriter.WriteLine($"using Service.Core;");
 						streamWriter.WriteLine();
 						streamWriter.WriteLine($"namespace GameBase.Template.GameBase.Table");
 						streamWriter.WriteLine("{");
@@ -109,10 +111,13 @@ namespace common_tool
 								case "array_Byte":
 								case "array_string":
 									string[] words = columnList[i].Type.Split("_");
-									streamWriter.WriteLine($"\t\tpublic List<{words[1]}> {columnList[i].Name} = new List<{words[1]}>()");
+									streamWriter.WriteLine($"\t\tpublic List<{words[1]}> {columnList[i].Name} = new List<{words[1]}>();");
+									break;
+								case "string":
+									streamWriter.WriteLine($"\t\tpublic {columnList[i].Type} {columnList[i].Name} = string.Empty;");
 									break;
 								default:
-									streamWriter.WriteLine($"\t\tpublic {columnList[i].Type} {columnList[i].Name} = new {columnList[i].Type}()");
+									streamWriter.WriteLine($"\t\tpublic {columnList[i].Type} {columnList[i].Name} = new {columnList[i].Type}();");
 									break;
 							}
 						}
@@ -141,6 +146,11 @@ namespace common_tool
 										streamWriter.WriteLine($"\t\t\tif (data.ContainsKey(\"{columnList[i].Name}\") == true) {{ {columnList[i].Name} = (data[\"{columnList[i].Name}\"] == \"-1\") ? default(DateTime) : DateTime.Parse(data[\"{columnList[i].Name}\"]); }}");
 									}
 									break;
+								case "string":
+									{
+                                        streamWriter.WriteLine($"\t\t\tif (data.ContainsKey(\"{columnList[i].Name}\") == true) {{ {columnList[i].Name} = data[\"{columnList[i].Name}\"].Replace(\"{{$}}\", \",\"); }}");
+                                    }
+									break;
                                 case "array_bool":
                                 case "array_short":
                                 case "array_int":
@@ -160,6 +170,11 @@ namespace common_tool
                                         }
 									}
                                     break;
+								default:
+									{
+										streamWriter.WriteLine($"\t\t\tif (data.ContainsKey(\"{columnList[i].Name}\") == true) {{ {columnList[i].Name} = ({columnList[i].Type})Enum.Parse(typeof({columnList[i].Type}), data[\"{columnList[i].Name}\"]); }}");
+									}
+									break;
                             }
 
 
