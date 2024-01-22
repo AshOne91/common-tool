@@ -7,10 +7,8 @@ using System.Text;
 
 namespace common_tool.Tools.Generate
 {
-    public class GenerateApplication: ActionBase
+    public class GenerateApplication: GenerateController
     {
-        InfraApplication infraApplication = null;
-
         public GenerateApplication(Parameter param) : base(param)
         {
         }
@@ -52,7 +50,7 @@ namespace common_tool.Tools.Generate
             string infraFilePath = Path.Combine(targetDir, "infrastructure-config.json");
             using (StreamReader r = new StreamReader(infraFilePath))
             {
-                infraApplication = JsonConvert.DeserializeObject<InfraApplication>(r.ReadToEnd());
+                _infraApplication = JsonConvert.DeserializeObject<InfraApplication>(r.ReadToEnd());
             }
 
             GenerateProjectFile(targetDir, applicationName);
@@ -60,31 +58,7 @@ namespace common_tool.Tools.Generate
             GenerateAppSettingFile(targetDir, applicationName.ToLower() + "-config_debug.json");
             GenerateAppFile(targetDir, templateDir, applicationName);
             GenerateEntryFile(targetDir, applicationName);
-            GenerateControllers(targetDir, templateDir, infraApplication.applicationName, infraApplication.templates);
-        }
-
-        void GenerateInfrastructureFile(string targetDir, string applicationName)
-        {
-            string filePath = Path.Combine(targetDir, "infrastructure-config.json");
-            if (File.Exists(filePath) == true)
-            {
-                return;
-            }
-
-            using (var streamWriter = new StreamWriter(filePath))
-            {
-                streamWriter.WriteLine("{");
-                streamWriter.WriteLine("\t\"applicationName\" : \"{0}\",", applicationName);
-                streamWriter.WriteLine("\t\"applicationVersion\" : \"\",");
-                streamWriter.WriteLine("\t\"services\" : [");
-                streamWriter.WriteLine("\t\t\"../../Service/Service.Core\",");
-                streamWriter.WriteLine("\t\t\"../../Service/Service.Net\"");
-                streamWriter.WriteLine("\t],");
-                streamWriter.WriteLine("\t\"templates\" : []");
-                streamWriter.WriteLine("}");
-            }
-
-            Console.WriteLine($"Generate InfrastructureFile : {filePath}");
+            GenerateControllers(targetDir, templateDir, _infraApplication.applicationName, _infraApplication.templates);
         }
 
         void GenerateProjectFile(string targetDir, string applicationName)
@@ -100,7 +74,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t</PropertyGroup>");
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\t<ItemGroup>");
-                foreach (var template in infraApplication.services)
+                foreach (var template in _infraApplication.services)
                 {
                     var words = Helpers.SplitPath(template);
                     var path = Path.Combine(template, words[words.Length - 1]);
@@ -112,7 +86,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t<ItemGroup>");
                 streamWriter.WriteLine("\t\t<ProjectReference Include=\"../../Template/GameBase/GameBase.csproj\" />");
 
-                foreach (var template in infraApplication.templates)
+                foreach (var template in _infraApplication.templates)
                 {
                     var words = Helpers.SplitPath(template);
                     var path = Path.Combine(template, words[words.Length - 1]);
@@ -214,13 +188,13 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("using System.Collections.Generic;");
                 streamWriter.WriteLine("using System.Net;");
                 streamWriter.WriteLine("using System.Net.Sockets;");
-                foreach (var service in infraApplication.services)
+                foreach (var service in _infraApplication.services)
                 {
                     var words = Helpers.SplitPath(service);
                     streamWriter.WriteLine("using {0};", words[words.Length - 1]);
                 }
                 streamWriter.WriteLine("using GameBase.Template.GameBase;");
-                foreach (var template in infraApplication.templates)
+                foreach (var template in _infraApplication.templates)
                 {
                     var words = Helpers.SplitPath(template);
                     DirectoryInfo childDir = new DirectoryInfo(Path.Combine(templateDir, words[words.Length - 2], words[words.Length - 1]));
@@ -259,7 +233,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tbool result = base.Create(config, frame);");
                 streamWriter.WriteLine();
-                foreach (var template in infraApplication.templates)
+                foreach (var template in _infraApplication.templates)
                 {
                     var words = Helpers.SplitPath(template);
                     DirectoryInfo childDir = new DirectoryInfo(Path.Combine(templateDir, words[words.Length - 2], words[words.Length - 1]));
@@ -307,7 +281,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\tsession.SetUserObject(obj);");
                 streamWriter.WriteLine("\t\t\tobj.SetSocketSession(session);");
                 streamWriter.WriteLine();
-                foreach (var template in infraApplication.templates)
+                foreach (var template in _infraApplication.templates)
                 {
                     var words = Helpers.SplitPath(template);
                     DirectoryInfo childDir = new DirectoryInfo(Path.Combine(templateDir, words[words.Length - 2], words[words.Length - 1]));
@@ -377,7 +351,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic override void OnPacket(SocketSession session, Packet packet)");
                 streamWriter.WriteLine("\t\t{");
-                foreach (var template in infraApplication.templates)
+                foreach (var template in _infraApplication.templates)
                 {
                     var words = Helpers.SplitPath(template);
                     DirectoryInfo childDir = new DirectoryInfo(Path.Combine(templateDir, words[words.Length - 2], words[words.Length - 1]));
@@ -407,93 +381,6 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tGameBaseTemplateContext.UpdateClient(dt);");
                 streamWriter.WriteLine("\t\t\tGameBaseTemplateContext.UpdateTemplate(dt);");
-                streamWriter.WriteLine("\t\t}");
-                streamWriter.WriteLine("\t}");
-                streamWriter.WriteLine("}");
-            }
-        }
-
-        void GenerateControllers(string targetDir, string templateDir, string applicationName, List<string> templates)
-        {
-            string controllerPath = Path.Combine(targetDir, "Controller");
-            if (Directory.Exists(controllerPath) == false)
-            {
-                Directory.CreateDirectory(controllerPath);
-            }
-
-            foreach (var template in templates)
-            {
-                var words = Helpers.SplitPath(template);
-                DirectoryInfo childDIr = new DirectoryInfo(Path.Combine(templateDir, words[words.Length - 2], words[words.Length - 1]));
-                FileInfo[] files = childDIr.GetFiles();
-                foreach (FileInfo file in files)
-                {
-                    if (file.Extension.CompareTo(".json") != 0 || file.Name.StartsWith("infrastructure-config") == false)
-                    {
-                        continue;
-                    }
-
-                    using (StreamReader r = new StreamReader(file.FullName))
-                    {
-                        var templateConfig = JsonConvert.DeserializeObject<InfraTemplateConfig>(r.ReadToEnd());
-                        GenerateControllerFile(templateConfig, file.DirectoryName, controllerPath);
-                    }
-                }
-            }
-        }
-
-        void GenerateControllerFile(InfraTemplateConfig templateConfig, string templatePath, string controllerPath)
-        {
-            var words = Helpers.SplitPath(templatePath);
-            string filePath = Path.Combine(controllerPath, templateConfig.templateName + "Controller.cs");
-            using (var streamWriter = new StreamWriter(filePath))
-            {
-                streamWriter.WriteLine("using System;");
-                streamWriter.WriteLine("using System.Collections.Generic;");
-                streamWriter.WriteLine("using Service.Net;");
-                streamWriter.WriteLine("using GameBase.Template.GameBase;");
-                streamWriter.WriteLine("using GameBase.Template.{0}.{1};", words[words.Length - 2], words[words.Length - 1]);
-                streamWriter.WriteLine("using GameBase.Template.{0}.{1}.Common;", words[words.Length - 2], words[words.Length - 1]);
-                streamWriter.WriteLine();
-                streamWriter.WriteLine("namespace {0}", infraApplication.applicationName);
-                streamWriter.WriteLine("{");
-                streamWriter.WriteLine("\tpublic static class {0}Controller", templateConfig.templateType);
-                streamWriter.WriteLine("\t{");
-                streamWriter.WriteLine("\t\tstatic Dictionary<ulong, {0}Protocol> _protocolByUid = new Dictionary<ulong, {1}Protocol>();", words[words.Length - 1], words[words.Length - 1]);
-                streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic static void Add{0}Controller(ulong uid)", words[words.Length - 2]);
-                streamWriter.WriteLine("\t\t{");
-                streamWriter.WriteLine("\t\t\t{0}Template template = GameBaseTemplateContext.GetTemplate<{1}Template>(uid, ETemplateType.{2});", words[words.Length - 1], words[words.Length - 1], words[words.Length - 2]);
-                streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\t\tif (_protocolByUid.ContainsKey(uid) == true)");
-                streamWriter.WriteLine("\t\t\t{");
-                streamWriter.WriteLine("\t\t\t\tthrow new Exception(\"Duplication Add{0}Controller\");", words[words.Length - 2]);
-                streamWriter.WriteLine("\t\t\t}");
-                streamWriter.WriteLine("\t\t\t{0}Protocol protocol = new {1}Protocol();", words[words.Length - 1], words[words.Length - 1]);
-                foreach (var protocol in templateConfig.protocols)
-                {
-                    if (protocol.method.ToLower() == "noti")
-                    {
-                        streamWriter.WriteLine("\t\t\tprotocol.ON_{0}_NOTI_CALLBACK = template.ON_{1}_NOTI_CALLBACK;", protocol.name, protocol.name);
-                    }
-                    else if (protocol.method.ToLower() == "react")
-                    {
-                        streamWriter.WriteLine("\t\t\tprotocol.ON_{0}_REQ_CALLBACK = template.ON_{1}_REQ_CALLBACK;", protocol.name, protocol.name);
-                        streamWriter.WriteLine("\t\t\tprotocol.ON_{0}_RES_CALLBACK = template.ON_{1}_RES_CALLBACK;", protocol.name, protocol.name);
-                    }
-                }
-                streamWriter.WriteLine("\t\t\t_protocolByUid.Add(uid, protocol);");
-                streamWriter.WriteLine("\t\t}");
-                streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic static bool OnPacket(ImplObject obj, ushort protocolId, Packet packet)");
-                streamWriter.WriteLine("\t\t{");
-                streamWriter.WriteLine("\t\t\tulong uid = obj.GetSession().GetUid();");
-                streamWriter.WriteLine("\t\t\tif (_protocolByUid.ContainsKey(uid) == false)");
-                streamWriter.WriteLine("\t\t\t{");
-                streamWriter.WriteLine("\t\t\t\treturn false;");
-                streamWriter.WriteLine("\t\t\t}");
-                streamWriter.WriteLine("\t\t\tvar Protocol = _protocolByUid[uid];");
-                streamWriter.WriteLine("\t\t\treturn Protocol.OnPacket(obj, protocolId, packet);");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine("\t}");
                 streamWriter.WriteLine("}");

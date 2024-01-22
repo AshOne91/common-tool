@@ -27,7 +27,8 @@ namespace common_tool
 				    {"gen:template", new GenerateTemplate(param)},
                     {"gen:database", new GenerateDatabase(param)},
                     {"gen:sql", new GenerateSql(param)},
-                    {"gen:application", new GenerateApplication(param)}
+                    {"gen:application", new GenerateApplication(param)},
+                    {"gen:controller", new GenerateController(param)}
                 };
 
                 if (args.Length <= 2)
