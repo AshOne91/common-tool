@@ -137,7 +137,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t_protocolByUid.Add(uid, protocol);");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
-                streamWriter.WriteLine("\t\tpublic static void Remove{0}Controller(ulong uid)");
+                streamWriter.WriteLine("\t\tpublic static void Remove{0}Controller(ulong uid)", words[words.Length - 2]);
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tif (_protocolByUid.ContainsKey(uid) == true)");
                 streamWriter.WriteLine("\t\t\t{");
