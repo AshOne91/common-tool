@@ -337,6 +337,46 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\tif (userObj != null)");
                 streamWriter.WriteLine("\t\t\t{");
                 streamWriter.WriteLine("\t\t\t\tGameBaseTemplateContext.DeleteClient(userObj.GetSession().GetUid());");
+                foreach (var template in _infraApplication.templates)
+                {
+                    var words = Helpers.SplitPath(template);
+                    DirectoryInfo childDir = new DirectoryInfo(Path.Combine(templateDir, words[words.Length - 2], words[words.Length - 1]));
+                    FileInfo[] files = childDir.GetFiles();
+                    foreach (FileInfo file in files)
+                    {
+                        if (file.Extension.CompareTo(".json") != 0 || file.Name.StartsWith("infrastructure-config") == false)
+                        {
+                            continue;
+                        }
+
+                        using (StreamReader r = new StreamReader(file.FullName))
+                        {
+                            var templateWords = Helpers.SplitPath(file.DirectoryName);
+                            var templateConfig = JsonConvert.DeserializeObject<InfraTemplateConfig>(r.ReadToEnd());
+                            streamWriter.WriteLine("\t\t\t\tGameBaseTemplateContext.RemoveTemplate(ETemplateType.{0}, new {1}Template());", templateWords[templateWords.Length - 2], templateWords[templateWords.Length - 1]);
+                        }
+                    }
+                }
+                foreach (var template in _infraApplication.templates)
+                {
+                    var words = Helpers.SplitPath(template);
+                    DirectoryInfo childDir = new DirectoryInfo(Path.Combine(templateDir, words[words.Length - 2], words[words.Length - 1]));
+                    FileInfo[] files = childDir.GetFiles();
+                    foreach (FileInfo file in files)
+                    {
+                        if (file.Extension.CompareTo(".json") != 0 || file.Name.StartsWith("infrastructure-config") == false)
+                        {
+                            continue;
+                        }
+
+                        using (StreamReader r = new StreamReader(file.FullName))
+                        {
+                            var templateWords = Helpers.SplitPath(file.DirectoryName);
+                            var templateConfig = JsonConvert.DeserializeObject<InfraTemplateConfig>(r.ReadToEnd());
+                            streamWriter.WriteLine("\t\t\t\t{0}Controller.Remove{1}Controller(session.GetUid());", templateWords[templateWords.Length - 2], templateWords[templateWords.Length - 2]);
+                        }
+                    }
+                }
                 streamWriter.WriteLine("\t\t\t\tuserObj.OnClose();");
                 streamWriter.WriteLine("\t\t\t\tuserObj.Dispose();");
                 streamWriter.WriteLine("\t\t\t\tsession.SetUserObject(null);");

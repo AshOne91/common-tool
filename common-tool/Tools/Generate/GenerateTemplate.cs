@@ -204,11 +204,23 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("namespace GameBase.{0}", namespaceValue);
                 streamWriter.WriteLine("{");
-
                 streamWriter.WriteLine("\tpublic partial class {0}Template : {1}Template", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t{");
                 streamWriter.WriteLine("\t\tImplObject _obj = null;");
                 streamWriter.WriteLine("\t\tstatic {0}Impl _Impl = null;", _config.templateName);
+                streamWriter.WriteLine();
+                streamWriter.WriteLine("\t\tpublic override GameBaseUserDB CreateUserDB()");
+                streamWriter.WriteLine("\t\t{");
+                if (_config.databases.Count == 0)
+                {
+                    streamWriter.WriteLine("\t\t\treturn base.CreateUserDB();");
+                }
+                else
+                {
+                    streamWriter.WriteLine("\t\t\treturn new {0}UserDB();", _config.templateName);
+                }
+                streamWriter.WriteLine("\t\t}");
+                streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic override void Init(TemplateConfig config, ServerType type)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\tbase.Init(config, type);");
@@ -225,7 +237,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\tpublic override void OnClientCreate(ImplObject userObject)");
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\t_obj = userObject;");
-                streamWriter.WriteLine("\t\t\tswitch ((ObjectType)userObject.GetObjectID())");
+                streamWriter.WriteLine("\t\t\tswitch ((ObjectType)userObject.ObjectID)");
                 streamWriter.WriteLine("\t\t\t{");
                 streamWriter.WriteLine("\t\t\t\tcase ObjectType.Master:");
                 streamWriter.WriteLine("\t\t\t\t\t{");
@@ -245,6 +257,11 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t\tcase ObjectType.Game:");
                 streamWriter.WriteLine("\t\t\t\t\t{");
                 streamWriter.WriteLine("\t\t\t\t\t\t_obj.{0}Impl = new {1}GameImpl(_obj);", words[1], _config.templateName);
+                streamWriter.WriteLine("\t\t\t\t\t}");
+                streamWriter.WriteLine("\t\t\t\t\tbreak;");
+                streamWriter.WriteLine("\t\t\t\tcase ObjectType.Client:");
+                streamWriter.WriteLine("\t\t\t\t\t{");
+                streamWriter.WriteLine("\t\t\t\t\t\t_obj.{0}Impl = new {1}ClientImpl(_obj);", words[1], _config.templateName);
                 streamWriter.WriteLine("\t\t\t\t\t}");
                 streamWriter.WriteLine("\t\t\t\t\tbreak;");
                 streamWriter.WriteLine("\t\t\t}");
@@ -388,6 +405,12 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\tpublic partial class {0}GameImpl : {1}Impl", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t{");
                 streamWriter.WriteLine("\t\tpublic {0}GameImpl(ImplObject obj) : base(obj){{}}", _config.templateName);
+                streamWriter.WriteLine("\t\t// TODO : ImplObject에서 사용 될 변수 선언 및 함수 구현");
+                streamWriter.WriteLine("\t}");
+                streamWriter.WriteLine();
+                streamWriter.WriteLine("\tpublic partial class {0}ClientImpl : {1}Impl", _config.templateName, words[1]);
+                streamWriter.WriteLine("\t{");
+                streamWriter.WriteLine("\t\tpublic {0}ClientImpl(ImplObject obj) : base(obj){{}}", _config.templateName);
                 streamWriter.WriteLine("\t\t// TODO : ImplObject에서 사용 될 변수 선언 및 함수 구현");
                 streamWriter.WriteLine("\t}");
                 streamWriter.WriteLine("}");
