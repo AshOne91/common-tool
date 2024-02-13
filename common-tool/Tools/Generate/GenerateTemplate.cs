@@ -268,6 +268,15 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine("\t\t\t// TODO : 유저의 최초 생성시 필요한 DB관련 로직을 작성");
                 streamWriter.WriteLine("\t\t}");
                 streamWriter.WriteLine();
+                streamWriter.WriteLine("\t\tpublic override void OnSetNewbie(ImplObject userObject)");
+                streamWriter.WriteLine("\t\t{");
+                streamWriter.WriteLine("\t\t}");
+                streamWriter.WriteLine();
+                streamWriter.WriteLine("\t\tpublic override bool OnPlayerSelectPrepare(ImplObject userObject)");
+                streamWriter.WriteLine("\t\t{");
+                streamWriter.WriteLine("\t\t\treturn true;");
+                streamWriter.WriteLine("\t\t}");
+                streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic T Get{0}Impl<T>() where T : {1}Impl", _config.templateName, words[1]);
                 streamWriter.WriteLine("\t\t{");
                 streamWriter.WriteLine("\t\t\treturn _obj.{0}Impl as T;", words[1]);

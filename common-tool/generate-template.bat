@@ -1,5 +1,6 @@
-start common-tool gen template --target-path D:\game-server\Template\GameBase --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\GameBase
-start common-tool gen template --target-path D:\game-server\Template\Account\GameBaseAccount --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Account\GameBaseAccount
+@echo off
+::start common-tool gen template --target-path D:\game-server\Template\GameBase --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\GameBase
+::start common-tool gen template --target-path D:\game-server\Template\Account\GameBaseAccount --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Account\GameBaseAccount
 ::start common-tool gen template --target-path D:\game-server\Template\Admin\GameBaseAdmin --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Admin\GameBaseAdmin
 ::start common-tool gen template --target-path D:\game-server\Template\Advert\GameBaseAdvert --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Advert\GameBaseAdvert
 ::start common-tool gen template --target-path D:\game-server\Template\Attendance\GameBaseAttendance --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Attendance\GameBaseAttendance
@@ -16,5 +17,6 @@ start common-tool gen template --target-path D:\game-server\Template\Account\Gam
 ::start common-tool gen template --target-path D:\game-server\Template\Rank\GameBaseRank --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Rank\GameBaseRank
 ::start common-tool gen template --target-path D:\game-server\Template\Report\GameBaseReport --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Report\GameBaseReport
 ::start common-tool gen template --target-path D:\game-server\Template\Season\GameBaseSeason --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Season\GameBaseSeason
-::start common-tool gen template --target-path D:\game-server\Template\Shop\GameBaseShop --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Shop\GameBaseShop
+start common-tool gen template --target-path D:\game-server\Template\Shop\GameBaseShop --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Shop\GameBaseShop
 ::start common-tool gen template --target-path D:\game-server\Template\User\GameBaseUser --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\User\GameBaseUser
+pause
