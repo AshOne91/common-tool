@@ -9,7 +9,7 @@
 ::start common-tool gen template --target-path D:\game-server\Template\Building\GameBaseBuilding --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Building\GameBaseBuilding
 ::start common-tool gen template --target-path D:\game-server\Template\Character\GameBaseCharacter --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Character\GameBaseCharacter
 ::start common-tool gen template --target-path D:\game-server\Template\Community\GameBaseCommunity --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Community\GameBaseCommunity
-start common-tool gen template --target-path D:\game-server\Template\Item\GameBaseItem --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Item\GameBaseItem
+::start common-tool gen template --target-path D:\game-server\Template\Item\GameBaseItem --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Item\GameBaseItem
 ::start common-tool gen template --target-path D:\game-server\Template\MailBox\GameBaseMailBox --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\MailBox\GameBaseMailBox
 ::start common-tool gen template --target-path D:\game-server\Template\Matching\GameBaseMatching --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Matching\GameBaseMatching
 ::start common-tool gen template --target-path D:\game-server\Template\Notice\GameBaseNotice --client-path D:\unity-game-client\game-client\Assets\Test\Network\Scripts\Template\Notice\GameBaseNotice

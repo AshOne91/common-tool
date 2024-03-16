@@ -108,7 +108,7 @@ namespace common_tool.Tools.Generate
                 streamWriter.WriteLine();
                 streamWriter.WriteLine("\t\tpublic override void Copy(UserDB userSrc, bool isChanged)");
                 streamWriter.WriteLine("\t\t{");
-                streamWriter.WriteLine("\t\t\t{0}UserDB userDB = userSrc.GetUserDB<{1}UserDB>(ETemplateType.{2});", _config.templateName, _config.templateName, _config.templateType);
+                streamWriter.WriteLine("\t\t\t{0}UserDB userDB = userSrc.GetReadUserDB<{1}UserDB>(ETemplateType.{2});", _config.templateName, _config.templateName, _config.templateType);
                 foreach (var database in _config.databases)
                 {
                     if (database.tableType.ToLower() == "slot")
@@ -593,12 +593,12 @@ namespace common_tool.Tools.Generate
                     if (database.tableType.ToLower() == "slot")
                     {
                         streamWriter.WriteLine("\tpublic class DBSlot_{0} : DBSlot<{1}>{{}}", database.tableName, database.tableName);
-                        streamWriter.WriteLine("\tpublic class DBSlotContainer_{0} : DBSlotContainer<DBSlot_{1}>{{}}", database.tableName, database.tableName);
+                        streamWriter.WriteLine("\tpublic class DBSlotContainer_{0} : DBSlotContainer<DBSlot_{1}, {2}>{{}}", database.tableName, database.tableName, database.tableName);
                     }
                     else
                     {
                         streamWriter.WriteLine("\tpublic class DBBase_{0} : DBBase<{1}>{{}}", database.tableName, database.tableName);
-                        streamWriter.WriteLine("\tpublic class DBBaseContainer_{0} : DBBaseContainer<DBBase_{1}>{{}}", database.tableName, database.tableName);
+                        streamWriter.WriteLine("\tpublic class DBBaseContainer_{0} : DBBaseContainer<DBBase_{1}, {2}>{{}}", database.tableName, database.tableName, database.tableName);
                     }
                 }
                 streamWriter.WriteLine("}");
