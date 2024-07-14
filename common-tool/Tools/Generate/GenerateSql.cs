@@ -135,7 +135,7 @@ namespace common_tool.Tools.Generate
         }
         static string DeleteTable(InfraDatabase database)
         {
-            string str = "DROP TABLE if exists " + database.tableName.ToLower() + ";\r\n";
+            string str = "DROP TABLE if exists " + "table_auto_" + database.tableName.ToLower() + ";\r\n";
             return str;
         }
         static string CreateTable(InfraDatabase database)
@@ -398,6 +398,10 @@ namespace common_tool.Tools.Generate
                 if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                 {
                     str += "\t\t" + database.partitionKey_1;
+                    if (string.IsNullOrEmpty (database.partitionKey_2) == true) 
+                    {
+                        str += ",\r\n";
+                    }
                 }
                 if (string.IsNullOrEmpty(database.partitionKey_2) == false)
                 {
@@ -421,6 +425,10 @@ namespace common_tool.Tools.Generate
                 if (string.IsNullOrEmpty(database.partitionKey_1) == false)
                 {
                     str += "\t\tp_" + database.partitionKey_1;
+                    if (string.IsNullOrEmpty(database.partitionKey_2) == true)
+                    {
+                        str += ",\r\n";
+                    }
                 }
                 if (string.IsNullOrEmpty(database.partitionKey_2) == false)
                 {
@@ -466,7 +474,7 @@ namespace common_tool.Tools.Generate
                     count++;
                     str += "\t\t" + member.name + " = p_" + member.name + ((count < database.members.Count) ? "," : "") + "\r\n";
                 }
-                str += "\t\tWHERE " + GetCombineKey(database, "AND") + ";\r\n";
+                str += "\t\tWHERE " + GetCombineKey(database, " AND") + ";\r\n";
             }
             return str;
         }
@@ -483,7 +491,7 @@ namespace common_tool.Tools.Generate
                 {
                     strKey += sep + "\r\n";
                 }
-                strKey += "\t\t" + database.partitionKey_2;
+                strKey += "\t\t" + database.partitionKey_2 + " = p_" + database.partitionKey_2;
             }
             return strKey;
         }
@@ -494,6 +502,10 @@ namespace common_tool.Tools.Generate
             if (string.IsNullOrEmpty(database.partitionKey_1) == false)
             {
                 str += "p_" + database.partitionKey_1 +",','";
+                if (string.IsNullOrEmpty(database.partitionKey_2) == true)
+                {
+                    str += ",";
+                }
             }
             if (string.IsNullOrEmpty(database.partitionKey_2) == false)
             {

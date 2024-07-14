@@ -110,6 +110,7 @@ namespace common_tool
 								case "array_DateTime":
 								case "array_Byte":
 								case "array_string":
+								case "array_long":
 									string[] words = columnList[i].Type.Split("_");
 									streamWriter.WriteLine($"\t\tpublic List<{words[1]}> {columnList[i].Name} = new List<{words[1]}>();");
 									break;
@@ -137,6 +138,7 @@ namespace common_tool
 								case "short":
 								case "float":
 								case "Byte":
+								case "long":
 									{
 										streamWriter.WriteLine($"\t\t\tif (data.ContainsKey(\"{columnList[i].Name}\") == true) {{ {columnList[i].Name} = {columnList[i].Type}.Parse(data[\"{columnList[i].Name}\"]); }}");
 									}
@@ -158,6 +160,7 @@ namespace common_tool
                                 case "array_DateTime":
                                 case "array_Byte":
                                 case "array_string":
+								case "array_long":
 									{
 										string[] words = columnList[i].Type.Split("_");
 										if (columnList[i].Type != "array_string")

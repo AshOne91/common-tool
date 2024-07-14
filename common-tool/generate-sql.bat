@@ -1,2 +1,6 @@
-start common-tool gen sql --target-path D:\game-server\Template\Item\GameBaseItem --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb1 --type game
-start common-tool gen sql --target-path D:\game-server\Template\Item\GameBaseItem --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb2 --type game
+::start common-tool gen sql --target-path D:\game-server\Template\Item\GameBaseItem --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb1 --type game
+::start common-tool gen sql --target-path D:\game-server\Template\Item\GameBaseItem --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb2 --type game
+::start common-tool gen sql --target-path D:\game-server\Template\Account\GameBaseAccount --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb1 --type game
+::start common-tool gen sql --target-path D:\game-server\Template\Account\GameBaseAccount --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb2 --type game
+start common-tool gen sql --target-path D:\game-server\Template\Shop\GameBaseShop --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb1 --type game
+start common-tool gen sql --target-path D:\game-server\Template\Shop\GameBaseShop --id ubf --pw qjxjvmffkdl!@# --ip 127.0.0.1 --port 3306 --name gamedb2 --type game
