@@ -466,8 +466,8 @@ namespace common_tool.Tools.Generate
                 str += "UPDATE " + "table_auto_" + database.tableName.ToLower() + "\r\n";
                 str += "    SET\r\n";
                 str += "\t\t" + GetCombineKey(database, ",") + ",\r\n";
-                str += "\t\tcreateTime = p_createTime,\r\n";
-                str += "\t\tupdateTime = p_updateTime,\r\n";
+                str += "\t\tcreate_time = p_createTime,\r\n";
+                str += "\t\tupdate_time = p_updateTime,\r\n";
                 int count = 0;
                 foreach (var member in database.members)
                 {
