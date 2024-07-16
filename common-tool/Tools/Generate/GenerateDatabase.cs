@@ -589,6 +589,24 @@ namespace common_tool.Tools.Generate
                         }
                     }
                     streamWriter.WriteLine("\t\t}");
+                    streamWriter.WriteLine("\t\tpublic override void Copy(BaseDBClass srcDBData)");
+                    streamWriter.WriteLine("\t\t{");
+                    streamWriter.WriteLine("\t\t\t{0} src{1} = ({2})srcDBData;", database.tableName, database.tableName, database.tableName);
+                    if (string.IsNullOrEmpty(database.partitionKey_1) == false)
+                    {
+                        streamWriter.WriteLine("\t\t\t{0} = src{1}.{2};", database.partitionKey_1, database.tableName, database.partitionKey_1);
+                    }
+                    if (string.IsNullOrEmpty(database.partitionKey_2) == false)
+                    {
+                        streamWriter.WriteLine("\t\t\t{0} = src{1}.{2};", database.partitionKey_2, database.tableName, database.partitionKey_2);
+                    }
+                    streamWriter.WriteLine("\t\t\tcreate_time = src{0}.create_time;", database.tableName);
+                    streamWriter.WriteLine("\t\t\tupdate_time = src{0}.update_time;", database.tableName);
+                    foreach(var member in database.members)
+                    {
+                        streamWriter.WriteLine("\t\t\t{0} = src{1}.{2};", member.name, database.tableName, member.name);
+                    }
+                    streamWriter.WriteLine("\t\t}");
                     streamWriter.WriteLine("\t}");
                     if (database.tableType.ToLower() == "slot")
                     {
